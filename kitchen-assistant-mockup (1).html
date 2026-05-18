@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>우리집 부엌 — 디자인 시안</title>
+<style>
+  @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
+  :root {
+    --bg: #ffffff;
+    --surface: #fafafa;
+    --line: #ececec;
+    --line-strong: #e0e0e0;
+    --ink: #1c1c1e;
+    --ink-mid: #6b6b70;
+    --ink-soft: #a0a0a5;
+    --accent: #e0904c;       /* 따뜻한 오렌지 - 부엌 느낌 */
+    --accent-bg: #fbf0e4;
+    --fresh: #5b9a6b;        /* 신선 - 그린 */
+    --fresh-bg: #ebf3ec;
+    --soon: #d9a23b;         /* 임박 - 옐로우 */
+    --soon-bg: #fbf3df;
+    --expired: #d9655f;      /* 만료 - 레드 */
+    --expired-bg: #fbecec;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { overflow-x: hidden; }
+
+  body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background: #e8e8ea;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 440px;
+    margin: 0 auto;
+    background: var(--bg);
+    min-height: 100vh;
+    position: relative;
+  }
+
+  .demo-banner {
+    background: #fff8e1;
+    border-bottom: 1px solid #f0e2b0;
+    padding: 8px 22px;
+    font-size: 12px;
+    color: #8a7320;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  header { padding: 22px 22px 0; }
+  .head-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+  .head-sub { font-size: 13px; color: var(--ink-soft); margin-top: 3px; font-weight: 500; }
+
+  .tabs { display: flex; padding: 18px 22px 0; border-bottom: 1px solid var(--line); }
+  .tab {
+    padding: 8px 2px 14px; margin-right: 20px;
+    background: none; border: none; font-family: inherit;
+    font-size: 15px; font-weight: 600; color: var(--ink-soft);
+    cursor: pointer; position: relative; letter-spacing: -0.02em;
+  }
+  .tab.active { color: var(--ink); }
+  .tab.active::after {
+    content: ""; position: absolute; bottom: -1px; left: 0; right: 0;
+    height: 2px; background: var(--ink); border-radius: 2px;
+  }
+
+  .content { padding: 20px 22px 100px; }
+
+  /* ===== 냉장고 ===== */
+  .summary-row { display: flex; gap: 8px; margin-bottom: 20px; }
+  .summary-card {
+    flex: 1; padding: 13px 12px; border-radius: 13px; text-align: center;
+  }
+  .summary-num { font-size: 21px; font-weight: 700; letter-spacing: -0.03em; }
+  .summary-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
+  .sc-fresh { background: var(--fresh-bg); }
+  .sc-fresh .summary-num, .sc-fresh .summary-label { color: var(--fresh); }
+  .sc-soon { background: var(--soon-bg); }
+  .sc-soon .summary-num, .sc-soon .summary-label { color: var(--soon); }
+  .sc-expired { background: var(--expired-bg); }
+  .sc-expired .summary-num, .sc-expired .summary-label { color: var(--expired); }
+
+  .group-label {
+    font-size: 12px; font-weight: 700; color: var(--ink-soft);
+    margin: 18px 0 8px; letter-spacing: 0.02em;
+  }
+
+  .item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 0; border-bottom: 1px solid var(--line);
+  }
+  .item-emoji {
+    width: 40px; height: 40px; border-radius: 11px;
+    background: var(--surface); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  .item-body { flex: 1; }
+  .item-name { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+  .item-place { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .item-dday {
+    font-size: 12px; font-weight: 700;
+    padding: 5px 10px; border-radius: 9px; flex-shrink: 0;
+  }
+  .dday-fresh { background: var(--fresh-bg); color: var(--fresh); }
+  .dday-soon { background: var(--soon-bg); color: var(--soon); }
+  .dday-expired { background: var(--expired-bg); color: var(--expired); }
+
+  /* ===== 레시피 ===== */
+  .recipe-search {
+    width: 100%; border: 1px solid var(--line-strong);
+    border-radius: 12px; padding: 11px 14px;
+    font-family: inherit; font-size: 14px; margin-bottom: 16px;
+    background: var(--surface);
+  }
+
+  .recipe-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .recipe-card {
+    border: 1px solid var(--line); border-radius: 14px;
+    overflow: hidden; cursor: pointer;
+  }
+  .recipe-thumb {
+    aspect-ratio: 1 / 0.72;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; position: relative;
+  }
+  .recipe-src {
+    position: absolute; top: 7px; left: 7px;
+    font-size: 9px; font-weight: 700; color: #fff;
+    padding: 3px 7px; border-radius: 6px;
+    background: rgba(0,0,0,0.55);
+  }
+  .recipe-body { padding: 10px 11px 12px; }
+  .recipe-name {
+    font-size: 13px; font-weight: 600; line-height: 1.35;
+    letter-spacing: -0.02em;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .recipe-memo {
+    font-size: 11px; color: var(--ink-soft); margin-top: 4px;
+    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  /* ===== 장보기 (날짜별 묶음) ===== */
+  .trip-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .trip-card.active-trip { border-color: var(--accent); background: #fffdfa; }
+
+  .trip-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .trip-date { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+  .trip-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px; }
+  .trip-badge.todo { background: var(--accent-bg); color: var(--accent); }
+  .trip-badge.done { background: var(--fresh-bg); color: var(--fresh); }
+
+  .trip-progress { font-size: 12px; color: var(--ink-soft); margin-bottom: 12px; }
+
+  .shop-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 0; border-bottom: 1px solid var(--line);
+  }
+  .shop-item:last-of-type { border-bottom: none; }
+  .shop-check {
+    width: 21px; height: 21px; border-radius: 7px;
+    border: 1.5px solid var(--line-strong); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px;
+  }
+  .shop-item.done .shop-check { background: var(--accent); border-color: var(--accent); }
+  .shop-name { flex: 1; font-size: 14px; font-weight: 500; }
+  .shop-item.done .shop-name { color: var(--ink-soft); text-decoration: line-through; }
+  .shop-from {
+    font-size: 10px; color: var(--accent);
+    background: var(--accent-bg); padding: 3px 8px; border-radius: 8px;
+  }
+
+  .trip-finish {
+    width: 100%; margin-top: 14px;
+    padding: 12px; border-radius: 11px;
+    border: none; background: var(--accent); color: #fff;
+    font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .trip-add-item {
+    width: 100%; margin-top: 10px;
+    padding: 10px; border-radius: 10px;
+    border: 1px dashed var(--line-strong);
+    background: var(--bg); color: var(--ink-soft);
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .trip-card.past { opacity: 0.72; }
+  .trip-card.past .trip-date { font-size: 14px; }
+
+
+
+  /* ===== 부엌 비서 추가 기능 ===== */
+  .assistant-card {
+    border-radius: 17px;
+    padding: 16px;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, #fff8ef 0%, #fffdf9 100%);
+    border: 1px solid #f2dfc9;
+  }
+  .assistant-title { font-size: 15px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 5px; }
+  .assistant-desc { font-size: 12px; color: var(--ink-mid); line-height: 1.45; margin-bottom: 13px; }
+  .priority-list { display: flex; flex-direction: column; gap: 8px; }
+  .priority-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 10px; background: rgba(255,255,255,0.72);
+    border: 1px solid #f3e7da; border-radius: 12px;
+  }
+  .priority-emoji { font-size: 20px; width: 28px; text-align: center; }
+  .priority-body { flex: 1; min-width: 0; }
+  .priority-name { font-size: 13px; font-weight: 700; letter-spacing: -0.02em; }
+  .priority-reason { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .priority-tag { font-size: 11px; font-weight: 800; padding: 5px 8px; border-radius: 8px; }
+
+  .rule-card {
+    margin-bottom: 18px; padding: 14px;
+    border-radius: 15px; background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .rule-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .rule-title { font-size: 13px; font-weight: 800; letter-spacing: -0.02em; }
+  .rule-edit { font-size: 11px; color: var(--accent); font-weight: 800; }
+  .rule-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .rule-chip { padding: 10px 6px; border-radius: 11px; text-align: center; background: #fff; border: 1px solid var(--line); }
+  .rule-chip strong { display: block; font-size: 12px; margin-bottom: 2px; }
+  .rule-chip span { font-size: 10px; color: var(--ink-soft); font-weight: 600; }
+
+  .item-meta { display: flex; align-items: center; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+  .type-badge { font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 7px; }
+  .type-fresh { color: var(--fresh); background: var(--fresh-bg); }
+  .type-normal { color: var(--accent); background: var(--accent-bg); }
+  .type-frozen { color: #5579b8; background: #edf2fb; }
+  .place-text { font-size: 12px; color: var(--ink-soft); }
+
+  .recipe-suggest {
+    border: 1px solid var(--line); border-radius: 15px;
+    padding: 14px; margin: 16px 0 18px;
+  }
+  .recipe-suggest-title { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .recipe-suggest-desc { font-size: 12px; color: var(--ink-soft); margin-bottom: 12px; }
+  .mini-recipe {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-top: 1px solid var(--line);
+  }
+  .mini-recipe:first-of-type { border-top: none; }
+  .mini-recipe-emoji { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--surface); font-size: 18px; }
+  .mini-recipe-body { flex: 1; }
+  .mini-recipe-name { font-size: 13px; font-weight: 700; }
+  .mini-recipe-uses { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .mini-recipe-btn { border: none; background: var(--ink); color: #fff; border-radius: 9px; padding: 7px 9px; font-family: inherit; font-size: 11px; font-weight: 800; }
+
+  .quick-actions { display: flex; gap: 8px; margin: 10px 0 2px; }
+  .quick-btn {
+    flex: 1; border: 1px solid var(--line-strong); background: #fff;
+    border-radius: 10px; padding: 9px 8px;
+    font-family: inherit; font-size: 12px; font-weight: 800; color: var(--ink-mid);
+  }
+  .quick-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .setting-view .setting-section { margin-bottom: 22px; }
+  .setting-title { font-size: 14px; font-weight: 800; margin-bottom: 10px; }
+  .setting-card { padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); margin-bottom: 10px; }
+  .setting-card-head { display: flex; justify-content: space-between; align-items: center; }
+  .setting-card-name { font-size: 14px; font-weight: 800; }
+  .setting-card-value { font-size: 12px; font-weight: 800; color: var(--accent); }
+  .setting-card-desc { font-size: 12px; color: var(--ink-soft); margin-top: 5px; line-height: 1.45; }
+
+  .fab {
+    position: fixed; bottom: 26px; left: 50%;
+    transform: translateX(calc(-50% + 158px));
+    width: 52px; height: 52px; border-radius: 16px;
+    background: var(--ink); color: #fff; border: none;
+    font-size: 24px; cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+  }
+  @media (max-width: 480px) { .fab { transform: none; right: 22px; } }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="demo-banner">🎨 디자인 시안입니다 · 샘플 데이터로 채워져 있어요</div>
+
+  <header>
+    <div class="head-title">우리집 부엌</div>
+    <div class="head-sub">2026년 5월 12일 화요일</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="fridge">냉장고</button>
+    <button class="tab" data-tab="recipe">레시피</button>
+    <button class="tab" data-tab="shop">장보기</button>
+    <button class="tab" data-tab="settings">설정</button>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <button class="fab">+</button>
+</div>
+
+<script>
+  const VIEWS = {
+    fridge: `
+      <div class="summary-row">
+        <div class="summary-card sc-fresh">
+          <div class="summary-num">7</div>
+          <div class="summary-label">신선</div>
+        </div>
+        <div class="summary-card sc-soon">
+          <div class="summary-num">4</div>
+          <div class="summary-label">임박</div>
+        </div>
+        <div class="summary-card sc-expired">
+          <div class="summary-num">1</div>
+          <div class="summary-label">지남</div>
+        </div>
+      </div>
+
+      <div class="assistant-card">
+        <div class="assistant-title">🍳 이번 주 안에 먹어요</div>
+        <div class="assistant-desc">유통기한과 식품 유형을 같이 보고, 먼저 먹으면 좋은 재료를 골랐어요.</div>
+        <div class="priority-list">
+          <div class="priority-item">
+            <div class="priority-emoji">🥛</div>
+            <div class="priority-body">
+              <div class="priority-name">우유</div>
+              <div class="priority-reason">신선식품 · 이미 1일 지남</div>
+            </div>
+            <div class="priority-tag dday-expired">지남</div>
+          </div>
+          <div class="priority-item">
+            <div class="priority-emoji">🥬</div>
+            <div class="priority-body">
+              <div class="priority-name">시금치</div>
+              <div class="priority-reason">신선식품 · 오늘/내일 요리 추천</div>
+            </div>
+            <div class="priority-tag dday-soon">D-1</div>
+          </div>
+          <div class="priority-item">
+            <div class="priority-emoji">🍓</div>
+            <div class="priority-body">
+              <div class="priority-name">딸기</div>
+              <div class="priority-reason">신선식품 · 디저트/스무디 추천</div>
+            </div>
+            <div class="priority-tag dday-soon">D-2</div>
+          </div>
+        </div>
+        <div class="quick-actions">
+          <button class="quick-btn primary">추천 레시피 보기</button>
+          <button class="quick-btn">장보기 추가</button>
+        </div>
+      </div>
+
+      <div class="rule-card">
+        <div class="rule-head">
+          <div class="rule-title">⏰ 유형별 임박 기준</div>
+          <div class="rule-edit">설정 변경</div>
+        </div>
+        <div class="rule-row">
+          <div class="rule-chip"><strong>신선</strong><span>3일 이내</span></div>
+          <div class="rule-chip"><strong>일반</strong><span>7일 이내</span></div>
+          <div class="rule-chip"><strong>냉동</strong><span>30일 이내</span></div>
+        </div>
+      </div>
+
+      <div class="group-label">⚠️ 빨리 먹어야 해요</div>
+
+      <div class="item">
+        <div class="item-emoji">🥛</div>
+        <div class="item-body">
+          <div class="item-name">우유</div>
+          <div class="item-meta"><span class="type-badge type-fresh">신선식품</span><span class="place-text">냉장실</span></div>
+        </div>
+        <div class="item-dday dday-expired">1일 지남</div>
+      </div>
+      <div class="item">
+        <div class="item-emoji">🥬</div>
+        <div class="item-body">
+          <div class="item-name">시금치</div>
+          <div class="item-meta"><span class="type-badge type-fresh">신선식품</span><span class="place-text">냉장실 · 채소칸</span></div>
+        </div>
+        <div class="item-dday dday-soon">D-1</div>
+      </div>
+      <div class="item">
+        <div class="item-emoji">🍓</div>
+        <div class="item-body">
+          <div class="item-name">딸기</div>
+          <div class="item-meta"><span class="type-badge type-fresh">신선식품</span><span class="place-text">냉장실</span></div>
+        </div>
+        <div class="item-dday dday-soon">D-2</div>
+      </div>
+      <div class="item">
+        <div class="item-emoji">🍗</div>
+        <div class="item-body">
+          <div class="item-name">닭가슴살</div>
+          <div class="item-meta"><span class="type-badge type-frozen">냉동식품</span><span class="place-text">냉동실</span></div>
+        </div>
+        <div class="item-dday dday-soon">D-21</div>
+      </div>
+
+      <div class="recipe-suggest">
+        <div class="recipe-suggest-title">🍽 지금 재료로 만들 수 있어요</div>
+        <div class="recipe-suggest-desc">임박 재료를 먼저 쓰는 조합으로 추천해요.</div>
+        <div class="mini-recipe">
+          <div class="mini-recipe-emoji">🍝</div>
+          <div class="mini-recipe-body">
+            <div class="mini-recipe-name">시금치 크림 파스타</div>
+            <div class="mini-recipe-uses">시금치 + 우유 사용</div>
+          </div>
+          <button class="mini-recipe-btn">보기</button>
+        </div>
+        <div class="mini-recipe">
+          <div class="mini-recipe-emoji">🥤</div>
+          <div class="mini-recipe-body">
+            <div class="mini-recipe-name">딸기 우유 스무디</div>
+            <div class="mini-recipe-uses">딸기 + 우유 사용</div>
+          </div>
+          <button class="mini-recipe-btn">보기</button>
+        </div>
+      </div>
+
+      <div class="group-label">✅ 아직 넉넉해요</div>
+
+      <div class="item">
+        <div class="item-emoji">🥚</div>
+        <div class="item-body">
+          <div class="item-name">계란</div>
+          <div class="item-meta"><span class="type-badge type-normal">일반식품</span><span class="place-text">냉장실</span></div>
+        </div>
+        <div class="item-dday dday-fresh">D-12</div>
+      </div>
+      <div class="item">
+        <div class="item-emoji">🧀</div>
+        <div class="item-body">
+          <div class="item-name">체다치즈</div>
+          <div class="item-meta"><span class="type-badge type-normal">일반식품</span><span class="place-text">냉장실</span></div>
+        </div>
+        <div class="item-dday dday-fresh">D-25</div>
+      </div>
+      <div class="item">
+        <div class="item-emoji">🧈</div>
+        <div class="item-body">
+          <div class="item-name">버터</div>
+          <div class="item-meta"><span class="type-badge type-normal">일반식품</span><span class="place-text">냉장실</span></div>
+        </div>
+        <div class="item-dday dday-fresh">D-40</div>
+      </div>
+        `,
+
+    recipe: `
+      <input class="recipe-search" placeholder="🔍 저장한 레시피 검색" readonly />
+
+      <div class="recipe-grid">
+        <div class="recipe-card">
+          <div class="recipe-thumb" style="background:#fbe4e4">
+            🍝
+            <span class="recipe-src" style="background:#c13584">인스타</span>
+          </div>
+          <div class="recipe-body">
+            <div class="recipe-name">마늘 크림 파스타</div>
+            <div class="recipe-memo">우유 들어감, 15분</div>
+          </div>
+        </div>
+
+        <div class="recipe-card">
+          <div class="recipe-thumb" style="background:#e4ecfb">
+            🍳
+            <span class="recipe-src" style="background:#ff0000">유튜브</span>
+          </div>
+          <div class="recipe-body">
+            <div class="recipe-name">백종원 계란찜 황금레시피</div>
+            <div class="recipe-memo">계란 4개</div>
+          </div>
+        </div>
+
+        <div class="recipe-card">
+          <div class="recipe-thumb" style="background:#e4fbe9">
+            🥗
+            <span class="recipe-src" style="background:#000">틱톡</span>
+          </div>
+          <div class="recipe-body">
+            <div class="recipe-name">다이어트 두부 샐러드</div>
+            <div class="recipe-memo">간단, 칼로리 낮음</div>
+          </div>
+        </div>
+
+        <div class="recipe-card">
+          <div class="recipe-thumb" style="background:#fbf2e4">
+            🍚
+            <span class="recipe-src" style="background:#ff0000">유튜브</span>
+          </div>
+          <div class="recipe-body">
+            <div class="recipe-name">참치마요 덮밥</div>
+            <div class="recipe-memo">자취 요리, 10분</div>
+          </div>
+        </div>
+      </div>
+    `,
+
+    shop: `
+      <div class="group-label">📍 다가오는 장보기</div>
+
+      <div class="trip-card active-trip">
+        <div class="trip-head">
+          <div class="trip-date">5월 14일 (수)</div>
+          <span class="trip-badge todo">진행 중</span>
+        </div>
+        <div class="trip-progress">5개 중 2개 담음</div>
+
+        <div class="shop-item done">
+          <div class="shop-check">✓</div>
+          <div class="shop-name">우유</div>
+          <span class="shop-from">냉장고</span>
+        </div>
+        <div class="shop-item done">
+          <div class="shop-check">✓</div>
+          <div class="shop-name">시금치</div>
+          <span class="shop-from">냉장고</span>
+        </div>
+        <div class="shop-item">
+          <div class="shop-check"></div>
+          <div class="shop-name">생크림</div>
+          <span class="shop-from">레시피</span>
+        </div>
+        <div class="shop-item">
+          <div class="shop-check"></div>
+          <div class="shop-name">양파</div>
+        </div>
+        <div class="shop-item">
+          <div class="shop-check"></div>
+          <div class="shop-name">식용유</div>
+        </div>
+
+        <button class="trip-add-item">+ 항목 추가</button>
+        <button class="trip-finish">🛒 장보기 끝!</button>
+      </div>
+
+      <div class="trip-card">
+        <div class="trip-head">
+          <div class="trip-date">5월 21일 (수)</div>
+          <span class="trip-badge todo">예정</span>
+        </div>
+        <div class="trip-progress">3개 중 0개 담음</div>
+
+        <div class="shop-item">
+          <div class="shop-check"></div>
+          <div class="shop-name">쌀</div>
+        </div>
+        <div class="shop-item">
+          <div class="shop-check"></div>
+          <div class="shop-name">계란</div>
+        </div>
+        <div class="shop-item">
+          <div class="shop-check"></div>
+          <div class="shop-name">두부</div>
+          <span class="shop-from">레시피</span>
+        </div>
+
+        <button class="trip-add-item">+ 항목 추가</button>
+      </div>
+
+      <div class="group-label">✅ 지난 장보기</div>
+
+      <div class="trip-card past">
+        <div class="trip-head">
+          <div class="trip-date">5월 7일 (수)</div>
+          <span class="trip-badge done">완료</span>
+        </div>
+        <div class="trip-progress">6개 모두 담음</div>
+      </div>
+
+      <div class="trip-card past">
+        <div class="trip-head">
+          <div class="trip-date">4월 30일 (수)</div>
+          <span class="trip-badge done">완료</span>
+        </div>
+        <div class="trip-progress">8개 중 7개 담음</div>
+      </div>
+    `
+,
+
+    settings: `
+      <div class="setting-view">
+        <div class="setting-section">
+          <div class="setting-title">⏰ 임박 알림 기준</div>
+
+          <div class="setting-card">
+            <div class="setting-card-head">
+              <div class="setting-card-name">신선식품</div>
+              <div class="setting-card-value">3일 이내</div>
+            </div>
+            <div class="setting-card-desc">우유, 두부, 생선, 샐러드처럼 날짜에 민감한 재료예요.</div>
+          </div>
+
+          <div class="setting-card">
+            <div class="setting-card-head">
+              <div class="setting-card-name">일반식품</div>
+              <div class="setting-card-value">7일 이내</div>
+            </div>
+            <div class="setting-card-desc">계란, 치즈, 햄, 소스처럼 비교적 여유 있는 재료예요.</div>
+          </div>
+
+          <div class="setting-card">
+            <div class="setting-card-head">
+              <div class="setting-card-name">냉동식품</div>
+              <div class="setting-card-value">30일 이내</div>
+            </div>
+            <div class="setting-card-desc">냉동만두, 냉동고기처럼 긴 기간 보관하는 재료예요.</div>
+          </div>
+        </div>
+
+        <div class="setting-section">
+          <div class="setting-title">✨ 자동 추천</div>
+          <div class="setting-card">
+            <div class="setting-card-head">
+              <div class="setting-card-name">이번 주 소비 추천</div>
+              <div class="setting-card-value">켜짐</div>
+            </div>
+            <div class="setting-card-desc">지남/임박 재료를 먼저 보여주고, 같이 만들 수 있는 레시피를 추천해요.</div>
+          </div>
+          <div class="setting-card">
+            <div class="setting-card-head">
+              <div class="setting-card-name">장보기 자동 제안</div>
+              <div class="setting-card-value">켜짐</div>
+            </div>
+            <div class="setting-card-desc">자주 사는 품목이나 다 먹은 재료를 다음 장보기 목록에 추가할 수 있어요.</div>
+          </div>
+        </div>
+      </div>
+    `
+  };
+
+  const content = document.getElementById('content');
+  function show(tab) { content.innerHTML = VIEWS[tab]; }
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.onclick = () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      show(tab.dataset.tab);
+    };
+  });
+
+  show('fridge');
+</script>
+
+</body>
+</html>
