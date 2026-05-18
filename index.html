@@ -530,13 +530,13 @@ function renderFridgeItem(item) {
 
 function renderRecipes() {
   return `<input class="recipe-search" placeholder="🔍 저장한 레시피 검색" readonly />
-    <div class="recipe-grid">${data.recipes.map(r => `<div class="recipe-card">
-      <div class="recipe-thumb" style="background:#fbf2e4" ${r.url ? `data-open-url="${esc(r.url)}"` : ''}>${esc(r.emoji || '🍽️')}<span class="recipe-src">${esc(r.source || '직접')}</span></div>
+    <div class="recipe-grid">${data.recipes.map(r => `<div class="recipe-card" data-view-recipe="${r.id}">
+      <div class="recipe-thumb" style="background:#fbf2e4">${esc(r.emoji || '🍽️')}<span class="recipe-src">${esc(r.source || '직접')}</span></div>
       <div class="recipe-body">
-        <div class="recipe-name" ${r.url ? `data-open-url="${esc(r.url)}"` : ''}>${esc(r.name)}</div>
+        <div class="recipe-name">${esc(r.name)}</div>
         <div class="recipe-memo">${esc(r.memo || r.ingredients || '')}</div>
         <div class="recipe-actions">
-          ${r.url ? `<button class="mini-btn" data-open-url="${esc(r.url)}">열기</button>` : ''}
+          <button class="mini-btn" data-view-recipe-btn="${r.id}">보기</button>
           <button class="mini-btn" data-edit-recipe="${r.id}">수정</button>
           <button class="mini-btn" data-del-recipe="${r.id}">삭제</button>
         </div>
@@ -583,16 +583,16 @@ function settingCard(name, key, desc) {
 }
 
 function bindContentEvents() {
-  document.querySelectorAll('[data-open-url]').forEach(b => b.onclick = (e) => {
+  document.querySelectorAll('[data-view-recipe]').forEach(card => card.onclick = () => openRecipeDetailModal(card.dataset.viewRecipe));
+  document.querySelectorAll('[data-view-recipe-btn]').forEach(b => b.onclick = (e) => {
     e.stopPropagation();
-    const url = b.dataset.openUrl;
-    if (url) window.open(url, '_blank');
+    openRecipeDetailModal(b.dataset.viewRecipeBtn);
   });
   document.querySelectorAll('[data-tabgo]').forEach(b => b.onclick = () => switchTab(b.dataset.tabgo));
   document.querySelectorAll('[data-edit-fridge]').forEach(b => b.onclick = () => openFridgeModal(b.dataset.editFridge));
   document.querySelectorAll('[data-del-fridge]').forEach(b => b.onclick = async () => { if(confirm('이 재료를 삭제할까요?')) { data.fridgeItems = data.fridgeItems.filter(x=>x.id!==b.dataset.delFridge); await saveAll(); render(); }});
-  document.querySelectorAll('[data-edit-recipe]').forEach(b => b.onclick = () => openRecipeModal(b.dataset.editRecipe));
-  document.querySelectorAll('[data-del-recipe]').forEach(b => b.onclick = async () => { if(confirm('이 레시피를 삭제할까요?')) { data.recipes = data.recipes.filter(x=>x.id!==b.dataset.delRecipe); await saveAll(); render(); }});
+  document.querySelectorAll('[data-edit-recipe]').forEach(b => b.onclick = (e) => { e.stopPropagation(); openRecipeModal(b.dataset.editRecipe); });
+  document.querySelectorAll('[data-del-recipe]').forEach(b => b.onclick = async (e) => { e.stopPropagation(); if(confirm('이 레시피를 삭제할까요?')) { data.recipes = data.recipes.filter(x=>x.id!==b.dataset.delRecipe); await saveAll(); render(); }});
   document.querySelectorAll('[data-add-shop-item]').forEach(b => b.onclick = () => openShopItemModal(b.dataset.addShopItem));
   document.querySelectorAll('[data-edit-trip]').forEach(b => b.onclick = () => openTripModal(b.dataset.editTrip));
   document.querySelectorAll('[data-del-trip]').forEach(b => b.onclick = async () => {
@@ -640,6 +640,45 @@ function openFridgeModal(id=null) {
     data.fridgeItems = it ? data.fridgeItems.map(x=>x.id===id?item:x) : [...data.fridgeItems, item];
     await saveAll(); closeModal(); render();
   };
+}
+
+function openRecipeDetailModal(id) {
+  const r = data.recipes.find(x => x.id === id);
+  if (!r) return;
+
+  openModal(`<div class="modal-title">레시피 상세</div>
+    <div class="field">
+      <label>레시피명</label>
+      <div style="font-size:17px;font-weight:800;line-height:1.45;letter-spacing:-0.02em;">${esc(r.emoji || '🍽️')} ${esc(r.name)}</div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>출처</label>
+        <div style="font-size:14px;color:var(--ink-mid);">${esc(r.source || '직접')}</div>
+      </div>
+      <div class="field">
+        <label>링크</label>
+        <div style="font-size:14px;color:var(--ink-mid);">${r.url ? '저장됨' : '없음'}</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>사용 재료</label>
+      <div style="font-size:15px;line-height:1.6;white-space:pre-wrap;background:var(--surface);border-radius:12px;padding:13px;color:var(--ink);">${r.ingredients ? esc(r.ingredients) : '사용 재료가 없어요.'}</div>
+    </div>
+    <div class="field">
+      <label>메모</label>
+      <div style="font-size:15px;line-height:1.65;white-space:pre-wrap;background:var(--surface);border-radius:12px;padding:13px;color:var(--ink);min-height:72px;">${r.memo ? esc(r.memo) : '메모가 없어요.'}</div>
+    </div>
+    <div class="modal-actions">
+      ${r.url ? `<button class="btn btn-cancel" id="openUrl">링크 열기</button>` : ''}
+      <button class="btn btn-cancel" id="editRecipe">수정</button>
+      <button class="btn btn-save" id="closeDetail">확인</button>
+    </div>`);
+
+  const openBtn = modalInner.querySelector('#openUrl');
+  if (openBtn) openBtn.onclick = () => window.open(r.url, '_blank');
+  modalInner.querySelector('#editRecipe').onclick = () => openRecipeModal(id);
+  modalInner.querySelector('#closeDetail').onclick = closeModal;
 }
 
 function openRecipeModal(id=null) {
