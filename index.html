@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>우리집 부엌 — 디자인 시안</title>
+<style>
+  @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
+
+  :root {
+    --bg: #ffffff;
+    --surface: #fafafa;
+    --line: #ececec;
+    --line-strong: #e0e0e0;
+    --ink: #1c1c1e;
+    --ink-mid: #6b6b70;
+    --ink-soft: #a0a0a5;
+    --accent: #e0904c;       /* 따뜻한 오렌지 - 부엌 느낌 */
+    --accent-bg: #fbf0e4;
+    --fresh: #5b9a6b;        /* 신선 - 그린 */
+    --fresh-bg: #ebf3ec;
+    --soon: #d9a23b;         /* 임박 - 옐로우 */
+    --soon-bg: #fbf3df;
+    --expired: #d9655f;      /* 만료 - 레드 */
+    --expired-bg: #fbecec;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { overflow-x: hidden; }
+
+  body {
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    background: #e8e8ea;
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .app {
+    max-width: 440px;
+    margin: 0 auto;
+    background: var(--bg);
+    min-height: 100vh;
+    position: relative;
+  }
+
+  .demo-banner {
+    background: #fff8e1;
+    border-bottom: 1px solid #f0e2b0;
+    padding: 8px 22px;
+    font-size: 12px;
+    color: #8a7320;
+    text-align: center;
+    font-weight: 500;
+  }
+
+  header { padding: 22px 22px 0; }
+  .head-title { font-size: 22px; font-weight: 700; letter-spacing: -0.03em; }
+  .head-sub { font-size: 13px; color: var(--ink-soft); margin-top: 3px; font-weight: 500; }
+
+  .tabs { display: flex; padding: 18px 22px 0; border-bottom: 1px solid var(--line); }
+  .tab {
+    padding: 8px 2px 14px; margin-right: 20px;
+    background: none; border: none; font-family: inherit;
+    font-size: 15px; font-weight: 600; color: var(--ink-soft);
+    cursor: pointer; position: relative; letter-spacing: -0.02em;
+  }
+  .tab.active { color: var(--ink); }
+  .tab.active::after {
+    content: ""; position: absolute; bottom: -1px; left: 0; right: 0;
+    height: 2px; background: var(--ink); border-radius: 2px;
+  }
+
+  .content { padding: 20px 22px 100px; }
+
+  /* ===== 냉장고 ===== */
+  .summary-row { display: flex; gap: 8px; margin-bottom: 20px; }
+  .summary-card {
+    flex: 1; padding: 13px 12px; border-radius: 13px; text-align: center;
+  }
+  .summary-num { font-size: 21px; font-weight: 700; letter-spacing: -0.03em; }
+  .summary-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
+  .sc-fresh { background: var(--fresh-bg); }
+  .sc-fresh .summary-num, .sc-fresh .summary-label { color: var(--fresh); }
+  .sc-soon { background: var(--soon-bg); }
+  .sc-soon .summary-num, .sc-soon .summary-label { color: var(--soon); }
+  .sc-expired { background: var(--expired-bg); }
+  .sc-expired .summary-num, .sc-expired .summary-label { color: var(--expired); }
+
+  .group-label {
+    font-size: 12px; font-weight: 700; color: var(--ink-soft);
+    margin: 18px 0 8px; letter-spacing: 0.02em;
+  }
+
+  .item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 13px 0; border-bottom: 1px solid var(--line);
+  }
+  .item-emoji {
+    width: 40px; height: 40px; border-radius: 11px;
+    background: var(--surface); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+  }
+  .item-body { flex: 1; }
+  .item-name { font-size: 15px; font-weight: 600; letter-spacing: -0.02em; }
+  .item-place { font-size: 12px; color: var(--ink-soft); margin-top: 2px; }
+  .item-dday {
+    font-size: 12px; font-weight: 700;
+    padding: 5px 10px; border-radius: 9px; flex-shrink: 0;
+  }
+  .dday-fresh { background: var(--fresh-bg); color: var(--fresh); }
+  .dday-soon { background: var(--soon-bg); color: var(--soon); }
+  .dday-expired { background: var(--expired-bg); color: var(--expired); }
+
+  /* ===== 레시피 ===== */
+  .recipe-search {
+    width: 100%; border: 1px solid var(--line-strong);
+    border-radius: 12px; padding: 11px 14px;
+    font-family: inherit; font-size: 14px; margin-bottom: 16px;
+    background: var(--surface);
+  }
+
+  .recipe-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+  }
+  .recipe-card {
+    border: 1px solid var(--line); border-radius: 14px;
+    overflow: hidden; cursor: pointer;
+  }
+  .recipe-thumb {
+    aspect-ratio: 1 / 0.72;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px; position: relative;
+  }
+  .recipe-src {
+    position: absolute; top: 7px; left: 7px;
+    font-size: 9px; font-weight: 700; color: #fff;
+    padding: 3px 7px; border-radius: 6px;
+    background: rgba(0,0,0,0.55);
+  }
+  .recipe-body { padding: 10px 11px 12px; }
+  .recipe-name {
+    font-size: 13px; font-weight: 600; line-height: 1.35;
+    letter-spacing: -0.02em;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .recipe-memo {
+    font-size: 11px; color: var(--ink-soft); margin-top: 4px;
+    display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden;
+  }
+
+  /* ===== 장보기 (날짜별 묶음) ===== */
+  .trip-card {
+    border: 1px solid var(--line-strong);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 14px;
+  }
+  .trip-card.active-trip { border-color: var(--accent); background: #fffdfa; }
+
+  .trip-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 4px;
+  }
+  .trip-date { font-size: 16px; font-weight: 700; letter-spacing: -0.02em; }
+  .trip-badge { font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px; }
+  .trip-badge.todo { background: var(--accent-bg); color: var(--accent); }
+  .trip-badge.done { background: var(--fresh-bg); color: var(--fresh); }
+
+  .trip-progress { font-size: 12px; color: var(--ink-soft); margin-bottom: 12px; }
+
+  .shop-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 11px 0; border-bottom: 1px solid var(--line);
+  }
+  .shop-item:last-of-type { border-bottom: none; }
+  .shop-check {
+    width: 21px; height: 21px; border-radius: 7px;
+    border: 1.5px solid var(--line-strong); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 12px;
+  }
+  .shop-item.done .shop-check { background: var(--accent); border-color: var(--accent); }
+  .shop-name { flex: 1; font-size: 14px; font-weight: 500; }
+  .shop-item.done .shop-name { color: var(--ink-soft); text-decoration: line-through; }
+  .shop-from {
+    font-size: 10px; color: var(--accent);
+    background: var(--accent-bg); padding: 3px 8px; border-radius: 8px;
+  }
+
+  .trip-finish {
+    width: 100%; margin-top: 14px;
+    padding: 12px; border-radius: 11px;
+    border: none; background: var(--accent); color: #fff;
+    font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+  }
+  .trip-add-item {
+    width: 100%; margin-top: 10px;
+    padding: 10px; border-radius: 10px;
+    border: 1px dashed var(--line-strong);
+    background: var(--bg); color: var(--ink-soft);
+    font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .trip-card.past { opacity: 0.72; }
+  .trip-card.past .trip-date { font-size: 14px; }
+
+
+
+  /* ===== 부엌 비서 추가 기능 ===== */
+  .assistant-card {
+    border-radius: 17px;
+    padding: 16px;
+    margin-bottom: 18px;
+    background: linear-gradient(135deg, #fff8ef 0%, #fffdf9 100%);
+    border: 1px solid #f2dfc9;
+  }
+  .assistant-title { font-size: 15px; font-weight: 800; letter-spacing: -0.03em; margin-bottom: 5px; }
+  .assistant-desc { font-size: 12px; color: var(--ink-mid); line-height: 1.45; margin-bottom: 13px; }
+  .priority-list { display: flex; flex-direction: column; gap: 8px; }
+  .priority-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 10px; background: rgba(255,255,255,0.72);
+    border: 1px solid #f3e7da; border-radius: 12px;
+  }
+  .priority-emoji { font-size: 20px; width: 28px; text-align: center; }
+  .priority-body { flex: 1; min-width: 0; }
+  .priority-name { font-size: 13px; font-weight: 700; letter-spacing: -0.02em; }
+  .priority-reason { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .priority-tag { font-size: 11px; font-weight: 800; padding: 5px 8px; border-radius: 8px; }
+
+  .rule-card {
+    margin-bottom: 18px; padding: 14px;
+    border-radius: 15px; background: var(--surface);
+    border: 1px solid var(--line);
+  }
+  .rule-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .rule-title { font-size: 13px; font-weight: 800; letter-spacing: -0.02em; }
+  .rule-edit { font-size: 11px; color: var(--accent); font-weight: 800; }
+  .rule-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .rule-chip { padding: 10px 6px; border-radius: 11px; text-align: center; background: #fff; border: 1px solid var(--line); }
+  .rule-chip strong { display: block; font-size: 12px; margin-bottom: 2px; }
+  .rule-chip span { font-size: 10px; color: var(--ink-soft); font-weight: 600; }
+
+  .item-meta { display: flex; align-items: center; gap: 5px; margin-top: 4px; flex-wrap: wrap; }
+  .type-badge { font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 7px; }
+  .type-fresh { color: var(--fresh); background: var(--fresh-bg); }
+  .type-normal { color: var(--accent); background: var(--accent-bg); }
+  .type-frozen { color: #5579b8; background: #edf2fb; }
+  .place-text { font-size: 12px; color: var(--ink-soft); }
+
+  .recipe-suggest {
+    border: 1px solid var(--line); border-radius: 15px;
+    padding: 14px; margin: 16px 0 18px;
+  }
+  .recipe-suggest-title { font-size: 14px; font-weight: 800; margin-bottom: 4px; }
+  .recipe-suggest-desc { font-size: 12px; color: var(--ink-soft); margin-bottom: 12px; }
+  .mini-recipe {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 0; border-top: 1px solid var(--line);
+  }
+  .mini-recipe:first-of-type { border-top: none; }
+  .mini-recipe-emoji { width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--surface); font-size: 18px; }
+  .mini-recipe-body { flex: 1; }
+  .mini-recipe-name { font-size: 13px; font-weight: 700; }
+  .mini-recipe-uses { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .mini-recipe-btn { border: none; background: var(--ink); color: #fff; border-radius: 9px; padding: 7px 9px; font-family: inherit; font-size: 11px; font-weight: 800; }
+
+  .quick-actions { display: flex; gap: 8px; margin: 10px 0 2px; }
+  .quick-btn {
+    flex: 1; border: 1px solid var(--line-strong); background: #fff;
+    border-radius: 10px; padding: 9px 8px;
+    font-family: inherit; font-size: 12px; font-weight: 800; color: var(--ink-mid);
+  }
+  .quick-btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  .setting-view .setting-section { margin-bottom: 22px; }
+  .setting-title { font-size: 14px; font-weight: 800; margin-bottom: 10px; }
+  .setting-card { padding: 14px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); margin-bottom: 10px; }
+  .setting-card-head { display: flex; justify-content: space-between; align-items: center; }
+  .setting-card-name { font-size: 14px; font-weight: 800; }
+  .setting-card-value { font-size: 12px; font-weight: 800; color: var(--accent); }
+  .setting-card-desc { font-size: 12px; color: var(--ink-soft); margin-top: 5px; line-height: 1.45; }
+
+  .fab {
+    position: fixed; bottom: 26px; left: 50%;
+    transform: translateX(calc(-50% + 158px));
+    width: 52px; height: 52px; border-radius: 16px;
+    background: var(--ink); color: #fff; border: none;
+    font-size: 24px; cursor: pointer;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+  }
+  @media (max-width: 480px) { .fab { transform: none; right: 22px; } }
+
+
+  /* ===== 공통 모달 / 액션 ===== */
+  .empty { text-align:center; padding:42px 16px; color:var(--ink-soft); font-size:14px; line-height:1.5; }
+  .item-actions, .recipe-actions, .shop-actions { display:flex; gap:5px; align-items:center; }
+  .mini-btn {
+    border:none; background:transparent; color:var(--ink-soft);
+    font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; padding:4px;
+  }
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(28,28,30,0.5);
+    z-index: 200; display: none; align-items: flex-end; justify-content: center;
+  }
+  .modal-bg.open { display:flex; }
+  @media (min-width:480px) { .modal-bg.open { align-items:center; } }
+  .modal {
+    background: var(--bg); border-radius: 22px 22px 0 0;
+    padding: 8px 22px 28px; width: 100%; max-width: 440px;
+    max-height: 88vh; overflow-y: auto;
+  }
+  @media (min-width:480px) { .modal { border-radius:20px; } }
+  .modal-grip { width:36px; height:4px; background:var(--line-strong); border-radius:4px; margin:8px auto 16px; }
+  .modal-title { font-size:18px; font-weight:800; margin-bottom:18px; letter-spacing:-0.02em; }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:13px; font-weight:700; color:var(--ink-mid); margin-bottom:6px; }
+  .field input, .field textarea, .field select {
+    width:100%; border:1px solid var(--line-strong); border-radius:11px;
+    padding:12px 13px; font-family:inherit; font-size:15px;
+    background:var(--bg); color:var(--ink);
+  }
+  .field textarea { resize:none; min-height:76px; }
+  .field-row { display:flex; gap:8px; }
+  .field-row .field { flex:1; }
+  .modal-actions { display:flex; gap:8px; margin-top:8px; }
+  .btn { flex:1; padding:13px; border-radius:12px; border:none; font-family:inherit; font-size:15px; font-weight:800; cursor:pointer; }
+  .btn-cancel { background:var(--surface); color:var(--ink-mid); }
+  .btn-save { background:var(--ink); color:#fff; }
+  .btn-danger { background:var(--expired-bg); color:var(--expired); }
+  .fab { z-index:50; }
+
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="demo-banner">🔥 Firestore 연결 버전 · 우리집 부엌 데이터 저장</div>
+
+  <header>
+    <div class="head-title">우리집 부엌</div>
+    <div class="head-sub">2026년 5월 12일 화요일</div>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="fridge">냉장고</button>
+    <button class="tab" data-tab="recipe">레시피</button>
+    <button class="tab" data-tab="shop">장보기</button>
+    <button class="tab" data-tab="settings">설정</button>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <button class="fab">+</button>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+/*
+  Firebase 콘솔 > 프로젝트 설정 > SDK 설정 및 구성에서 아래 값을 교체하세요.
+  이미 HJYJ Calendar 프로젝트를 그대로 쓰려면 기존 config를 그대로 넣어도 됩니다.
+*/
+const firebaseConfig = {
+  apiKey: "AIzaSyD-1yzBjPHkjPcY-kA7SW3Y_VsMzsejX3g",
+  authDomain: "kitchen-d1b9b.firebaseapp.com",
+  projectId: "kitchen-d1b9b",
+  storageBucket: "kitchen-d1b9b.firebasestorage.app",
+  messagingSenderId: "282284001113",
+  appId: "1:282284001113:web:23e61542002477403b2e48"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const boardRef = doc(db, "kitchenBoards", "main");
+
+const DOW = ['일','월','화','수','목','금','토'];
+const content = document.getElementById('content');
+const modalBg = document.getElementById('modalBg');
+const modalInner = document.getElementById('modalInner');
+
+let currentTab = 'fridge';
+let data = defaultData();
+
+function defaultData() {
+  return {
+    fridgeItems: [
+      { id: uid(), name:'우유', emoji:'🥛', type:'fresh', place:'냉장실', expireDate:'2026-05-11', memo:'' },
+      { id: uid(), name:'시금치', emoji:'🥬', type:'fresh', place:'냉장실 · 채소칸', expireDate:'2026-05-13', memo:'' },
+      { id: uid(), name:'딸기', emoji:'🍓', type:'fresh', place:'냉장실', expireDate:'2026-05-14', memo:'' },
+      { id: uid(), name:'닭가슴살', emoji:'🍗', type:'frozen', place:'냉동실', expireDate:'2026-06-02', memo:'' },
+      { id: uid(), name:'계란', emoji:'🥚', type:'normal', place:'냉장실', expireDate:'2026-05-24', memo:'' }
+    ],
+    recipes: [
+      { id: uid(), name:'마늘 크림 파스타', emoji:'🍝', source:'인스타', memo:'우유 들어감, 15분', ingredients:'우유, 마늘, 파스타면' },
+      { id: uid(), name:'계란찜 황금레시피', emoji:'🍳', source:'유튜브', memo:'계란 4개', ingredients:'계란, 물, 소금' },
+      { id: uid(), name:'딸기 우유 스무디', emoji:'🥤', source:'직접', memo:'임박 딸기 처리용', ingredients:'딸기, 우유' }
+    ],
+    shoppingTrips: [
+      { id: uid(), date:'2026-05-14', status:'active', items:[
+        { id: uid(), name:'우유', done:true, from:'냉장고' },
+        { id: uid(), name:'시금치', done:true, from:'냉장고' },
+        { id: uid(), name:'생크림', done:false, from:'레시피' },
+        { id: uid(), name:'양파', done:false, from:'' }
+      ]},
+      { id: uid(), date:'2026-05-21', status:'todo', items:[
+        { id: uid(), name:'쌀', done:false, from:'' },
+        { id: uid(), name:'계란', done:false, from:'' }
+      ]}
+    ],
+    settings: { freshSoonDays:3, normalSoonDays:7, frozenSoonDays:30 }
+  };
+}
+
+function loadAll() {
+  onSnapshot(boardRef, async (snap) => {
+    if (snap.exists()) {
+      const loaded = snap.data();
+      data = {
+        fridgeItems: loaded.fridgeItems || [],
+        recipes: loaded.recipes || [],
+        shoppingTrips: loaded.shoppingTrips || [],
+        settings: loaded.settings || defaultData().settings
+      };
+    } else {
+      await setDoc(boardRef, data);
+    }
+    render();
+  }, (err) => {
+    console.error(err);
+    alert('Firestore 연결 실패. Firebase config와 규칙을 확인해주세요.');
+    render();
+  });
+}
+
+async function saveAll() {
+  try { await setDoc(boardRef, data); }
+  catch(e) { console.error(e); alert('저장 실패'); }
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function esc(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function ymd(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function parseYmd(s) { const [y,m,d] = String(s).split('-').map(Number); const dt = new Date(y, m-1, d); dt.setHours(0,0,0,0); return dt; }
+function today() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+function fmtDate(s) { if(!s) return ''; const d = parseYmd(s); return `${d.getMonth()+1}월 ${d.getDate()}일`; }
+function fmtFullDate(s) { if(!s) return ''; const d = parseYmd(s); return `${d.getMonth()+1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`; }
+function typeLabel(t) { return t === 'fresh' ? '신선식품' : t === 'frozen' ? '냉동식품' : '일반식품'; }
+function typeClass(t) { return t === 'fresh' ? 'type-fresh' : t === 'frozen' ? 'type-frozen' : 'type-normal'; }
+function soonDays(t) { return t === 'fresh' ? Number(data.settings.freshSoonDays||3) : t === 'frozen' ? Number(data.settings.frozenSoonDays||30) : Number(data.settings.normalSoonDays||7); }
+function dday(item) {
+  if (!item.expireDate) return { days:9999, text:'날짜 없음', cls:'dday-fresh', group:'fresh' };
+  const diff = Math.ceil((parseYmd(item.expireDate) - today()) / 86400000);
+  if (diff < 0) return { days:diff, text:`${Math.abs(diff)}일 지남`, cls:'dday-expired', group:'expired' };
+  if (diff === 0) return { days:0, text:'오늘까지', cls:'dday-soon', group:'soon' };
+  if (diff <= soonDays(item.type)) return { days:diff, text:`D-${diff}`, cls:'dday-soon', group:'soon' };
+  return { days:diff, text:`D-${diff}`, cls:'dday-fresh', group:'fresh' };
+}
+
+function render() {
+  const now = new Date();
+  document.querySelector('.head-sub').textContent = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${DOW[now.getDay()]}요일`;
+  if (currentTab === 'fridge') content.innerHTML = renderFridge();
+  if (currentTab === 'recipe') content.innerHTML = renderRecipes();
+  if (currentTab === 'shop') content.innerHTML = renderShop();
+  if (currentTab === 'settings') content.innerHTML = renderSettings();
+  bindContentEvents();
+}
+
+function renderFridge() {
+  const statuses = data.fridgeItems.map(i => dday(i));
+  const freshCnt = statuses.filter(x=>x.group==='fresh').length;
+  const soonCnt = statuses.filter(x=>x.group==='soon').length;
+  const expiredCnt = statuses.filter(x=>x.group==='expired').length;
+  const priority = [...data.fridgeItems].sort((a,b)=>dday(a).days - dday(b).days).slice(0,3);
+  const urgent = data.fridgeItems.filter(i => dday(i).group !== 'fresh').sort((a,b)=>dday(a).days-dday(b).days);
+  const okay = data.fridgeItems.filter(i => dday(i).group === 'fresh').sort((a,b)=>dday(a).days-dday(b).days);
+
+  return `
+    <div class="summary-row">
+      <div class="summary-card sc-fresh"><div class="summary-num">${freshCnt}</div><div class="summary-label">신선</div></div>
+      <div class="summary-card sc-soon"><div class="summary-num">${soonCnt}</div><div class="summary-label">임박</div></div>
+      <div class="summary-card sc-expired"><div class="summary-num">${expiredCnt}</div><div class="summary-label">지남</div></div>
+    </div>
+    <div class="assistant-card">
+      <div class="assistant-title">🍳 이번 주 안에 먹어요</div>
+      <div class="assistant-desc">유통기한과 식품 유형을 같이 보고, 먼저 먹으면 좋은 재료를 골랐어요.</div>
+      <div class="priority-list">${priority.map(renderPriority).join('')}</div>
+      <div class="quick-actions"><button class="quick-btn primary" data-tabgo="recipe">추천 레시피 보기</button><button class="quick-btn" data-tabgo="shop">장보기 추가</button></div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-head"><div class="rule-title">⏰ 유형별 임박 기준</div><div class="rule-edit" data-tabgo="settings">설정 변경</div></div>
+      <div class="rule-row">
+        <div class="rule-chip"><strong>신선</strong><span>${data.settings.freshSoonDays}일 이내</span></div>
+        <div class="rule-chip"><strong>일반</strong><span>${data.settings.normalSoonDays}일 이내</span></div>
+        <div class="rule-chip"><strong>냉동</strong><span>${data.settings.frozenSoonDays}일 이내</span></div>
+      </div>
+    </div>
+    <div class="group-label">⚠️ 빨리 먹어야 해요</div>
+    ${urgent.length ? urgent.map(renderFridgeItem).join('') : '<div class="empty">임박한 재료가 없어요</div>'}
+    <div class="group-label">✅ 아직 넉넉해요</div>
+    ${okay.length ? okay.map(renderFridgeItem).join('') : '<div class="empty">넉넉한 재료가 없어요</div>'}
+  `;
+}
+
+function renderPriority(item) {
+  const d = dday(item);
+  return `<div class="priority-item">
+    <div class="priority-emoji">${esc(item.emoji || '🍽️')}</div>
+    <div class="priority-body"><div class="priority-name">${esc(item.name)}</div><div class="priority-reason">${typeLabel(item.type)} · ${esc(item.place || '위치 없음')}</div></div>
+    <div class="priority-tag ${d.cls}">${esc(d.text)}</div>
+  </div>`;
+}
+
+function renderFridgeItem(item) {
+  const d = dday(item);
+  return `<div class="item" data-fridge="${item.id}">
+    <div class="item-emoji">${esc(item.emoji || '🍽️')}</div>
+    <div class="item-body">
+      <div class="item-name">${esc(item.name)}</div>
+      <div class="item-meta"><span class="type-badge ${typeClass(item.type)}">${typeLabel(item.type)}</span><span class="place-text">${esc(item.place || '위치 없음')} · ${fmtDate(item.expireDate)}</span></div>
+    </div>
+    <div class="item-dday ${d.cls}">${esc(d.text)}</div>
+    <div class="item-actions"><button class="mini-btn" data-edit-fridge="${item.id}">수정</button><button class="mini-btn" data-del-fridge="${item.id}">✕</button></div>
+  </div>`;
+}
+
+function renderRecipes() {
+  return `<input class="recipe-search" placeholder="🔍 저장한 레시피 검색" readonly />
+    <div class="recipe-grid">${data.recipes.map(r => `<div class="recipe-card">
+      <div class="recipe-thumb" style="background:#fbf2e4">${esc(r.emoji || '🍽️')}<span class="recipe-src">${esc(r.source || '직접')}</span></div>
+      <div class="recipe-body"><div class="recipe-name">${esc(r.name)}</div><div class="recipe-memo">${esc(r.memo || r.ingredients || '')}</div>
+      <div class="recipe-actions"><button class="mini-btn" data-edit-recipe="${r.id}">수정</button><button class="mini-btn" data-del-recipe="${r.id}">삭제</button></div></div>
+    </div>`).join('')}</div>`;
+}
+
+function renderShop() {
+  const sorted = [...data.shoppingTrips].sort((a,b)=>a.date.localeCompare(b.date));
+  return `${sorted.map(renderTrip).join('') || '<div class="empty">장보기 일정이 없어요</div>'}`;
+}
+
+function renderTrip(trip) {
+  const done = trip.items.filter(i=>i.done).length;
+  const total = trip.items.length;
+  const finished = total > 0 && done === total;
+  return `<div class="trip-card ${finished?'past':'active-trip'}">
+    <div class="trip-head"><div class="trip-date">${fmtFullDate(trip.date)}</div><span class="trip-badge ${finished?'done':'todo'}">${finished?'완료':'진행 중'}</span></div>
+    <div class="trip-progress">${total}개 중 ${done}개 담음</div>
+    ${trip.items.map(it => `<div class="shop-item ${it.done?'done':''}">
+      <div class="shop-check" data-toggle-shop="${trip.id}|${it.id}">${it.done?'✓':''}</div>
+      <div class="shop-name">${esc(it.name)}</div>${it.from?`<span class="shop-from">${esc(it.from)}</span>`:''}
+      <div class="shop-actions"><button class="mini-btn" data-del-shop="${trip.id}|${it.id}">✕</button></div>
+    </div>`).join('')}
+    <button class="trip-add-item" data-add-shop-item="${trip.id}">+ 항목 추가</button>
+    <button class="trip-finish" data-edit-trip="${trip.id}">날짜/목록 수정</button>
+  </div>`;
+}
+
+function renderSettings() {
+  return `<div class="setting-view">
+    <div class="setting-section"><div class="setting-title">⏰ 임박 알림 기준</div>
+      ${settingCard('신선식품', 'freshSoonDays', '우유, 두부, 생선, 샐러드처럼 날짜에 민감한 재료예요.')}
+      ${settingCard('일반식품', 'normalSoonDays', '계란, 치즈, 햄, 소스처럼 비교적 여유 있는 재료예요.')}
+      ${settingCard('냉동식품', 'frozenSoonDays', '냉동만두, 냉동고기처럼 긴 기간 보관하는 재료예요.')}
+    </div>
+  </div>`;
+}
+function settingCard(name, key, desc) {
+  return `<div class="setting-card" data-setting="${key}"><div class="setting-card-head"><div class="setting-card-name">${name}</div><div class="setting-card-value">${data.settings[key]}일 이내</div></div><div class="setting-card-desc">${desc}</div></div>`;
+}
+
+function bindContentEvents() {
+  document.querySelectorAll('[data-tabgo]').forEach(b => b.onclick = () => switchTab(b.dataset.tabgo));
+  document.querySelectorAll('[data-edit-fridge]').forEach(b => b.onclick = () => openFridgeModal(b.dataset.editFridge));
+  document.querySelectorAll('[data-del-fridge]').forEach(b => b.onclick = async () => { if(confirm('이 재료를 삭제할까요?')) { data.fridgeItems = data.fridgeItems.filter(x=>x.id!==b.dataset.delFridge); await saveAll(); render(); }});
+  document.querySelectorAll('[data-edit-recipe]').forEach(b => b.onclick = () => openRecipeModal(b.dataset.editRecipe));
+  document.querySelectorAll('[data-del-recipe]').forEach(b => b.onclick = async () => { if(confirm('이 레시피를 삭제할까요?')) { data.recipes = data.recipes.filter(x=>x.id!==b.dataset.delRecipe); await saveAll(); render(); }});
+  document.querySelectorAll('[data-add-shop-item]').forEach(b => b.onclick = () => openShopItemModal(b.dataset.addShopItem));
+  document.querySelectorAll('[data-edit-trip]').forEach(b => b.onclick = () => openTripModal(b.dataset.editTrip));
+  document.querySelectorAll('[data-toggle-shop]').forEach(b => b.onclick = async () => { const [tid,iid] = b.dataset.toggleShop.split('|'); const tr = data.shoppingTrips.find(x=>x.id===tid); const it = tr?.items.find(x=>x.id===iid); if(it){ it.done=!it.done; await saveAll(); render(); }});
+  document.querySelectorAll('[data-del-shop]').forEach(b => b.onclick = async () => { const [tid,iid] = b.dataset.delShop.split('|'); const tr = data.shoppingTrips.find(x=>x.id===tid); if(tr && confirm('이 항목을 삭제할까요?')) { tr.items = tr.items.filter(x=>x.id!==iid); await saveAll(); render(); }});
+  document.querySelectorAll('[data-setting]').forEach(c => c.onclick = () => openSettingModal(c.dataset.setting));
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  render();
+}
+
+document.querySelectorAll('.tab').forEach(tab => tab.onclick = () => switchTab(tab.dataset.tab));
+document.querySelector('.fab').onclick = () => {
+  if (currentTab === 'fridge') openFridgeModal();
+  else if (currentTab === 'recipe') openRecipeModal();
+  else if (currentTab === 'shop') openTripModal();
+  else openSettingModal('freshSoonDays');
+};
+
+modalBg.onclick = e => { if(e.target === modalBg) closeModal(); };
+function closeModal(){ modalBg.classList.remove('open'); }
+function openModal(html){ modalInner.innerHTML = `<div class="modal-grip"></div>${html}`; modalBg.classList.add('open'); }
+
+function openFridgeModal(id=null) {
+  const it = id ? data.fridgeItems.find(x=>x.id===id) : null;
+  openModal(`<div class="modal-title">${it?'재료 수정':'재료 추가'}</div>
+    <div class="field-row"><div class="field"><label>이모지</label><input id="fEmoji" value="${esc(it?.emoji || '🥬')}"></div><div class="field"><label>유형</label><select id="fType"><option value="fresh">신선식품</option><option value="normal">일반식품</option><option value="frozen">냉동식품</option></select></div></div>
+    <div class="field"><label>재료명</label><input id="fName" placeholder="예: 우유" value="${esc(it?.name || '')}"></div>
+    <div class="field"><label>위치</label><input id="fPlace" placeholder="예: 냉장실 · 채소칸" value="${esc(it?.place || '')}"></div>
+    <div class="field"><label>유통기한</label><input id="fDate" type="date" value="${esc(it?.expireDate || ymd(today()))}"></div>
+    <div class="field"><label>메모</label><textarea id="fMemo" placeholder="구입처, 남은 양 등">${esc(it?.memo || '')}</textarea></div>
+    <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">저장</button></div>`);
+  modalInner.querySelector('#fType').value = it?.type || 'fresh';
+  modalInner.querySelector('#cancel').onclick = closeModal;
+  modalInner.querySelector('#save').onclick = async () => {
+    const item = { id: it?.id || uid(), emoji:fEmoji.value.trim()||'🍽️', name:fName.value.trim(), type:fType.value, place:fPlace.value.trim(), expireDate:fDate.value, memo:fMemo.value.trim() };
+    if(!item.name) return alert('재료명을 입력해주세요');
+    data.fridgeItems = it ? data.fridgeItems.map(x=>x.id===id?item:x) : [...data.fridgeItems, item];
+    await saveAll(); closeModal(); render();
+  };
+}
+
+function openRecipeModal(id=null) {
+  const r = id ? data.recipes.find(x=>x.id===id) : null;
+  openModal(`<div class="modal-title">${r?'레시피 수정':'레시피 추가'}</div>
+    <div class="field-row"><div class="field"><label>이모지</label><input id="rEmoji" value="${esc(r?.emoji || '🍳')}"></div><div class="field"><label>출처</label><input id="rSource" value="${esc(r?.source || '직접')}"></div></div>
+    <div class="field"><label>레시피명</label><input id="rName" value="${esc(r?.name || '')}"></div>
+    <div class="field"><label>사용 재료</label><input id="rIng" placeholder="예: 우유, 시금치" value="${esc(r?.ingredients || '')}"></div>
+    <div class="field"><label>메모</label><textarea id="rMemo">${esc(r?.memo || '')}</textarea></div>
+    <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">저장</button></div>`);
+  modalInner.querySelector('#cancel').onclick = closeModal;
+  modalInner.querySelector('#save').onclick = async () => {
+    const item = { id: r?.id || uid(), emoji:rEmoji.value.trim()||'🍽️', source:rSource.value.trim(), name:rName.value.trim(), ingredients:rIng.value.trim(), memo:rMemo.value.trim() };
+    if(!item.name) return alert('레시피명을 입력해주세요');
+    data.recipes = r ? data.recipes.map(x=>x.id===id?item:x) : [...data.recipes, item];
+    await saveAll(); closeModal(); render();
+  };
+}
+
+function openTripModal(id=null) {
+  const tr = id ? data.shoppingTrips.find(x=>x.id===id) : null;
+  openModal(`<div class="modal-title">${tr?'장보기 수정':'장보기 추가'}</div>
+    <div class="field"><label>장보기 날짜</label><input id="tDate" type="date" value="${esc(tr?.date || ymd(today()))}"></div>
+    <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">저장</button></div>`);
+  modalInner.querySelector('#cancel').onclick = closeModal;
+  modalInner.querySelector('#save').onclick = async () => {
+    const item = tr ? { ...tr, date:tDate.value } : { id:uid(), date:tDate.value, status:'todo', items:[] };
+    data.shoppingTrips = tr ? data.shoppingTrips.map(x=>x.id===id?item:x) : [...data.shoppingTrips, item];
+    await saveAll(); closeModal(); render();
+  };
+}
+
+function openShopItemModal(tripId) {
+  const tr = data.shoppingTrips.find(x=>x.id===tripId);
+  openModal(`<div class="modal-title">장보기 항목 추가</div>
+    <div class="field"><label>항목명</label><input id="sName" placeholder="예: 우유"></div>
+    <div class="field"><label>출처/메모</label><input id="sFrom" placeholder="예: 냉장고, 레시피"></div>
+    <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">추가</button></div>`);
+  modalInner.querySelector('#cancel').onclick = closeModal;
+  modalInner.querySelector('#save').onclick = async () => {
+    const name = sName.value.trim(); if(!name) return alert('항목명을 입력해주세요');
+    tr.items.push({ id:uid(), name, from:sFrom.value.trim(), done:false });
+    await saveAll(); closeModal(); render();
+  };
+}
+
+function openSettingModal(key) {
+  const labels = { freshSoonDays:'신선식품', normalSoonDays:'일반식품', frozenSoonDays:'냉동식품' };
+  openModal(`<div class="modal-title">${labels[key]} 임박 기준</div>
+    <div class="field"><label>며칠 이내부터 임박으로 볼까요?</label><input id="setVal" type="number" min="1" value="${data.settings[key]}"></div>
+    <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">저장</button></div>`);
+  modalInner.querySelector('#cancel').onclick = closeModal;
+  modalInner.querySelector('#save').onclick = async () => {
+    data.settings[key] = Number(setVal.value || 1);
+    await saveAll(); closeModal(); render();
+  };
+}
+
+loadAll();
+</script>
+
+</body>
+</html>
