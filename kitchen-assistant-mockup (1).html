@@ -290,12 +290,52 @@
     display: flex; align-items: center; justify-content: center;
   }
   @media (max-width: 480px) { .fab { transform: none; right: 22px; } }
+
+
+  /* ===== 공통 모달 / 액션 ===== */
+  .empty { text-align:center; padding:42px 16px; color:var(--ink-soft); font-size:14px; line-height:1.5; }
+  .item-actions, .recipe-actions, .shop-actions { display:flex; gap:5px; align-items:center; }
+  .mini-btn {
+    border:none; background:transparent; color:var(--ink-soft);
+    font-family:inherit; font-size:12px; font-weight:700; cursor:pointer; padding:4px;
+  }
+  .modal-bg {
+    position: fixed; inset: 0; background: rgba(28,28,30,0.5);
+    z-index: 200; display: none; align-items: flex-end; justify-content: center;
+  }
+  .modal-bg.open { display:flex; }
+  @media (min-width:480px) { .modal-bg.open { align-items:center; } }
+  .modal {
+    background: var(--bg); border-radius: 22px 22px 0 0;
+    padding: 8px 22px 28px; width: 100%; max-width: 440px;
+    max-height: 88vh; overflow-y: auto;
+  }
+  @media (min-width:480px) { .modal { border-radius:20px; } }
+  .modal-grip { width:36px; height:4px; background:var(--line-strong); border-radius:4px; margin:8px auto 16px; }
+  .modal-title { font-size:18px; font-weight:800; margin-bottom:18px; letter-spacing:-0.02em; }
+  .field { margin-bottom:14px; }
+  .field label { display:block; font-size:13px; font-weight:700; color:var(--ink-mid); margin-bottom:6px; }
+  .field input, .field textarea, .field select {
+    width:100%; border:1px solid var(--line-strong); border-radius:11px;
+    padding:12px 13px; font-family:inherit; font-size:15px;
+    background:var(--bg); color:var(--ink);
+  }
+  .field textarea { resize:none; min-height:76px; }
+  .field-row { display:flex; gap:8px; }
+  .field-row .field { flex:1; }
+  .modal-actions { display:flex; gap:8px; margin-top:8px; }
+  .btn { flex:1; padding:13px; border-radius:12px; border:none; font-family:inherit; font-size:15px; font-weight:800; cursor:pointer; }
+  .btn-cancel { background:var(--surface); color:var(--ink-mid); }
+  .btn-save { background:var(--ink); color:#fff; }
+  .btn-danger { background:var(--expired-bg); color:var(--expired); }
+  .fab { z-index:50; }
+
 </style>
 </head>
 <body>
 
 <div class="app">
-  <div class="demo-banner">🎨 디자인 시안입니다 · 샘플 데이터로 채워져 있어요</div>
+  <div class="demo-banner">🔥 Firestore 연결 버전 · 우리집 부엌 데이터 저장</div>
 
   <header>
     <div class="head-title">우리집 부엌</div>
@@ -314,350 +354,329 @@
   <button class="fab">+</button>
 </div>
 
-<script>
-  const VIEWS = {
-    fridge: `
-      <div class="summary-row">
-        <div class="summary-card sc-fresh">
-          <div class="summary-num">7</div>
-          <div class="summary-label">신선</div>
-        </div>
-        <div class="summary-card sc-soon">
-          <div class="summary-num">4</div>
-          <div class="summary-label">임박</div>
-        </div>
-        <div class="summary-card sc-expired">
-          <div class="summary-num">1</div>
-          <div class="summary-label">지남</div>
-        </div>
-      </div>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-      <div class="assistant-card">
-        <div class="assistant-title">🍳 이번 주 안에 먹어요</div>
-        <div class="assistant-desc">유통기한과 식품 유형을 같이 보고, 먼저 먹으면 좋은 재료를 골랐어요.</div>
-        <div class="priority-list">
-          <div class="priority-item">
-            <div class="priority-emoji">🥛</div>
-            <div class="priority-body">
-              <div class="priority-name">우유</div>
-              <div class="priority-reason">신선식품 · 이미 1일 지남</div>
-            </div>
-            <div class="priority-tag dday-expired">지남</div>
-          </div>
-          <div class="priority-item">
-            <div class="priority-emoji">🥬</div>
-            <div class="priority-body">
-              <div class="priority-name">시금치</div>
-              <div class="priority-reason">신선식품 · 오늘/내일 요리 추천</div>
-            </div>
-            <div class="priority-tag dday-soon">D-1</div>
-          </div>
-          <div class="priority-item">
-            <div class="priority-emoji">🍓</div>
-            <div class="priority-body">
-              <div class="priority-name">딸기</div>
-              <div class="priority-reason">신선식품 · 디저트/스무디 추천</div>
-            </div>
-            <div class="priority-tag dday-soon">D-2</div>
-          </div>
-        </div>
-        <div class="quick-actions">
-          <button class="quick-btn primary">추천 레시피 보기</button>
-          <button class="quick-btn">장보기 추가</button>
-        </div>
-      </div>
+/*
+  Firebase 콘솔 > 프로젝트 설정 > SDK 설정 및 구성에서 아래 값을 교체하세요.
+  이미 HJYJ Calendar 프로젝트를 그대로 쓰려면 기존 config를 그대로 넣어도 됩니다.
+*/
+const firebaseConfig = {
+  apiKey: "AIzaSyD-1yzBjPHkjPcY-kA7SW3Y_VsMzsejX3g",
+  authDomain: "kitchen-d1b9b.firebaseapp.com",
+  projectId: "kitchen-d1b9b",
+  storageBucket: "kitchen-d1b9b.firebasestorage.app",
+  messagingSenderId: "282284001113",
+  appId: "1:282284001113:web:23e61542002477403b2e48"
+};
 
-      <div class="rule-card">
-        <div class="rule-head">
-          <div class="rule-title">⏰ 유형별 임박 기준</div>
-          <div class="rule-edit">설정 변경</div>
-        </div>
-        <div class="rule-row">
-          <div class="rule-chip"><strong>신선</strong><span>3일 이내</span></div>
-          <div class="rule-chip"><strong>일반</strong><span>7일 이내</span></div>
-          <div class="rule-chip"><strong>냉동</strong><span>30일 이내</span></div>
-        </div>
-      </div>
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const boardRef = doc(db, "kitchenBoards", "main");
 
-      <div class="group-label">⚠️ 빨리 먹어야 해요</div>
+const DOW = ['일','월','화','수','목','금','토'];
+const content = document.getElementById('content');
+const modalBg = document.getElementById('modalBg');
+const modalInner = document.getElementById('modalInner');
 
-      <div class="item">
-        <div class="item-emoji">🥛</div>
-        <div class="item-body">
-          <div class="item-name">우유</div>
-          <div class="item-meta"><span class="type-badge type-fresh">신선식품</span><span class="place-text">냉장실</span></div>
-        </div>
-        <div class="item-dday dday-expired">1일 지남</div>
-      </div>
-      <div class="item">
-        <div class="item-emoji">🥬</div>
-        <div class="item-body">
-          <div class="item-name">시금치</div>
-          <div class="item-meta"><span class="type-badge type-fresh">신선식품</span><span class="place-text">냉장실 · 채소칸</span></div>
-        </div>
-        <div class="item-dday dday-soon">D-1</div>
-      </div>
-      <div class="item">
-        <div class="item-emoji">🍓</div>
-        <div class="item-body">
-          <div class="item-name">딸기</div>
-          <div class="item-meta"><span class="type-badge type-fresh">신선식품</span><span class="place-text">냉장실</span></div>
-        </div>
-        <div class="item-dday dday-soon">D-2</div>
-      </div>
-      <div class="item">
-        <div class="item-emoji">🍗</div>
-        <div class="item-body">
-          <div class="item-name">닭가슴살</div>
-          <div class="item-meta"><span class="type-badge type-frozen">냉동식품</span><span class="place-text">냉동실</span></div>
-        </div>
-        <div class="item-dday dday-soon">D-21</div>
-      </div>
+let currentTab = 'fridge';
+let data = defaultData();
 
-      <div class="recipe-suggest">
-        <div class="recipe-suggest-title">🍽 지금 재료로 만들 수 있어요</div>
-        <div class="recipe-suggest-desc">임박 재료를 먼저 쓰는 조합으로 추천해요.</div>
-        <div class="mini-recipe">
-          <div class="mini-recipe-emoji">🍝</div>
-          <div class="mini-recipe-body">
-            <div class="mini-recipe-name">시금치 크림 파스타</div>
-            <div class="mini-recipe-uses">시금치 + 우유 사용</div>
-          </div>
-          <button class="mini-recipe-btn">보기</button>
-        </div>
-        <div class="mini-recipe">
-          <div class="mini-recipe-emoji">🥤</div>
-          <div class="mini-recipe-body">
-            <div class="mini-recipe-name">딸기 우유 스무디</div>
-            <div class="mini-recipe-uses">딸기 + 우유 사용</div>
-          </div>
-          <button class="mini-recipe-btn">보기</button>
-        </div>
-      </div>
-
-      <div class="group-label">✅ 아직 넉넉해요</div>
-
-      <div class="item">
-        <div class="item-emoji">🥚</div>
-        <div class="item-body">
-          <div class="item-name">계란</div>
-          <div class="item-meta"><span class="type-badge type-normal">일반식품</span><span class="place-text">냉장실</span></div>
-        </div>
-        <div class="item-dday dday-fresh">D-12</div>
-      </div>
-      <div class="item">
-        <div class="item-emoji">🧀</div>
-        <div class="item-body">
-          <div class="item-name">체다치즈</div>
-          <div class="item-meta"><span class="type-badge type-normal">일반식품</span><span class="place-text">냉장실</span></div>
-        </div>
-        <div class="item-dday dday-fresh">D-25</div>
-      </div>
-      <div class="item">
-        <div class="item-emoji">🧈</div>
-        <div class="item-body">
-          <div class="item-name">버터</div>
-          <div class="item-meta"><span class="type-badge type-normal">일반식품</span><span class="place-text">냉장실</span></div>
-        </div>
-        <div class="item-dday dday-fresh">D-40</div>
-      </div>
-        `,
-
-    recipe: `
-      <input class="recipe-search" placeholder="🔍 저장한 레시피 검색" readonly />
-
-      <div class="recipe-grid">
-        <div class="recipe-card">
-          <div class="recipe-thumb" style="background:#fbe4e4">
-            🍝
-            <span class="recipe-src" style="background:#c13584">인스타</span>
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-name">마늘 크림 파스타</div>
-            <div class="recipe-memo">우유 들어감, 15분</div>
-          </div>
-        </div>
-
-        <div class="recipe-card">
-          <div class="recipe-thumb" style="background:#e4ecfb">
-            🍳
-            <span class="recipe-src" style="background:#ff0000">유튜브</span>
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-name">백종원 계란찜 황금레시피</div>
-            <div class="recipe-memo">계란 4개</div>
-          </div>
-        </div>
-
-        <div class="recipe-card">
-          <div class="recipe-thumb" style="background:#e4fbe9">
-            🥗
-            <span class="recipe-src" style="background:#000">틱톡</span>
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-name">다이어트 두부 샐러드</div>
-            <div class="recipe-memo">간단, 칼로리 낮음</div>
-          </div>
-        </div>
-
-        <div class="recipe-card">
-          <div class="recipe-thumb" style="background:#fbf2e4">
-            🍚
-            <span class="recipe-src" style="background:#ff0000">유튜브</span>
-          </div>
-          <div class="recipe-body">
-            <div class="recipe-name">참치마요 덮밥</div>
-            <div class="recipe-memo">자취 요리, 10분</div>
-          </div>
-        </div>
-      </div>
-    `,
-
-    shop: `
-      <div class="group-label">📍 다가오는 장보기</div>
-
-      <div class="trip-card active-trip">
-        <div class="trip-head">
-          <div class="trip-date">5월 14일 (수)</div>
-          <span class="trip-badge todo">진행 중</span>
-        </div>
-        <div class="trip-progress">5개 중 2개 담음</div>
-
-        <div class="shop-item done">
-          <div class="shop-check">✓</div>
-          <div class="shop-name">우유</div>
-          <span class="shop-from">냉장고</span>
-        </div>
-        <div class="shop-item done">
-          <div class="shop-check">✓</div>
-          <div class="shop-name">시금치</div>
-          <span class="shop-from">냉장고</span>
-        </div>
-        <div class="shop-item">
-          <div class="shop-check"></div>
-          <div class="shop-name">생크림</div>
-          <span class="shop-from">레시피</span>
-        </div>
-        <div class="shop-item">
-          <div class="shop-check"></div>
-          <div class="shop-name">양파</div>
-        </div>
-        <div class="shop-item">
-          <div class="shop-check"></div>
-          <div class="shop-name">식용유</div>
-        </div>
-
-        <button class="trip-add-item">+ 항목 추가</button>
-        <button class="trip-finish">🛒 장보기 끝!</button>
-      </div>
-
-      <div class="trip-card">
-        <div class="trip-head">
-          <div class="trip-date">5월 21일 (수)</div>
-          <span class="trip-badge todo">예정</span>
-        </div>
-        <div class="trip-progress">3개 중 0개 담음</div>
-
-        <div class="shop-item">
-          <div class="shop-check"></div>
-          <div class="shop-name">쌀</div>
-        </div>
-        <div class="shop-item">
-          <div class="shop-check"></div>
-          <div class="shop-name">계란</div>
-        </div>
-        <div class="shop-item">
-          <div class="shop-check"></div>
-          <div class="shop-name">두부</div>
-          <span class="shop-from">레시피</span>
-        </div>
-
-        <button class="trip-add-item">+ 항목 추가</button>
-      </div>
-
-      <div class="group-label">✅ 지난 장보기</div>
-
-      <div class="trip-card past">
-        <div class="trip-head">
-          <div class="trip-date">5월 7일 (수)</div>
-          <span class="trip-badge done">완료</span>
-        </div>
-        <div class="trip-progress">6개 모두 담음</div>
-      </div>
-
-      <div class="trip-card past">
-        <div class="trip-head">
-          <div class="trip-date">4월 30일 (수)</div>
-          <span class="trip-badge done">완료</span>
-        </div>
-        <div class="trip-progress">8개 중 7개 담음</div>
-      </div>
-    `
-,
-
-    settings: `
-      <div class="setting-view">
-        <div class="setting-section">
-          <div class="setting-title">⏰ 임박 알림 기준</div>
-
-          <div class="setting-card">
-            <div class="setting-card-head">
-              <div class="setting-card-name">신선식품</div>
-              <div class="setting-card-value">3일 이내</div>
-            </div>
-            <div class="setting-card-desc">우유, 두부, 생선, 샐러드처럼 날짜에 민감한 재료예요.</div>
-          </div>
-
-          <div class="setting-card">
-            <div class="setting-card-head">
-              <div class="setting-card-name">일반식품</div>
-              <div class="setting-card-value">7일 이내</div>
-            </div>
-            <div class="setting-card-desc">계란, 치즈, 햄, 소스처럼 비교적 여유 있는 재료예요.</div>
-          </div>
-
-          <div class="setting-card">
-            <div class="setting-card-head">
-              <div class="setting-card-name">냉동식품</div>
-              <div class="setting-card-value">30일 이내</div>
-            </div>
-            <div class="setting-card-desc">냉동만두, 냉동고기처럼 긴 기간 보관하는 재료예요.</div>
-          </div>
-        </div>
-
-        <div class="setting-section">
-          <div class="setting-title">✨ 자동 추천</div>
-          <div class="setting-card">
-            <div class="setting-card-head">
-              <div class="setting-card-name">이번 주 소비 추천</div>
-              <div class="setting-card-value">켜짐</div>
-            </div>
-            <div class="setting-card-desc">지남/임박 재료를 먼저 보여주고, 같이 만들 수 있는 레시피를 추천해요.</div>
-          </div>
-          <div class="setting-card">
-            <div class="setting-card-head">
-              <div class="setting-card-name">장보기 자동 제안</div>
-              <div class="setting-card-value">켜짐</div>
-            </div>
-            <div class="setting-card-desc">자주 사는 품목이나 다 먹은 재료를 다음 장보기 목록에 추가할 수 있어요.</div>
-          </div>
-        </div>
-      </div>
-    `
+function defaultData() {
+  return {
+    fridgeItems: [
+      { id: uid(), name:'우유', emoji:'🥛', type:'fresh', place:'냉장실', expireDate:'2026-05-11', memo:'' },
+      { id: uid(), name:'시금치', emoji:'🥬', type:'fresh', place:'냉장실 · 채소칸', expireDate:'2026-05-13', memo:'' },
+      { id: uid(), name:'딸기', emoji:'🍓', type:'fresh', place:'냉장실', expireDate:'2026-05-14', memo:'' },
+      { id: uid(), name:'닭가슴살', emoji:'🍗', type:'frozen', place:'냉동실', expireDate:'2026-06-02', memo:'' },
+      { id: uid(), name:'계란', emoji:'🥚', type:'normal', place:'냉장실', expireDate:'2026-05-24', memo:'' }
+    ],
+    recipes: [
+      { id: uid(), name:'마늘 크림 파스타', emoji:'🍝', source:'인스타', memo:'우유 들어감, 15분', ingredients:'우유, 마늘, 파스타면' },
+      { id: uid(), name:'계란찜 황금레시피', emoji:'🍳', source:'유튜브', memo:'계란 4개', ingredients:'계란, 물, 소금' },
+      { id: uid(), name:'딸기 우유 스무디', emoji:'🥤', source:'직접', memo:'임박 딸기 처리용', ingredients:'딸기, 우유' }
+    ],
+    shoppingTrips: [
+      { id: uid(), date:'2026-05-14', status:'active', items:[
+        { id: uid(), name:'우유', done:true, from:'냉장고' },
+        { id: uid(), name:'시금치', done:true, from:'냉장고' },
+        { id: uid(), name:'생크림', done:false, from:'레시피' },
+        { id: uid(), name:'양파', done:false, from:'' }
+      ]},
+      { id: uid(), date:'2026-05-21', status:'todo', items:[
+        { id: uid(), name:'쌀', done:false, from:'' },
+        { id: uid(), name:'계란', done:false, from:'' }
+      ]}
+    ],
+    settings: { freshSoonDays:3, normalSoonDays:7, frozenSoonDays:30 }
   };
+}
 
-  const content = document.getElementById('content');
-  function show(tab) { content.innerHTML = VIEWS[tab]; }
-
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.onclick = () => {
-      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      show(tab.dataset.tab);
-    };
+function loadAll() {
+  onSnapshot(boardRef, async (snap) => {
+    if (snap.exists()) {
+      const loaded = snap.data();
+      data = {
+        fridgeItems: loaded.fridgeItems || [],
+        recipes: loaded.recipes || [],
+        shoppingTrips: loaded.shoppingTrips || [],
+        settings: loaded.settings || defaultData().settings
+      };
+    } else {
+      await setDoc(boardRef, data);
+    }
+    render();
+  }, (err) => {
+    console.error(err);
+    alert('Firestore 연결 실패. Firebase config와 규칙을 확인해주세요.');
+    render();
   });
+}
 
-  show('fridge');
+async function saveAll() {
+  try { await setDoc(boardRef, data); }
+  catch(e) { console.error(e); alert('저장 실패'); }
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function esc(s) { return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function ymd(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+function parseYmd(s) { const [y,m,d] = String(s).split('-').map(Number); const dt = new Date(y, m-1, d); dt.setHours(0,0,0,0); return dt; }
+function today() { const d = new Date(); d.setHours(0,0,0,0); return d; }
+function fmtDate(s) { if(!s) return ''; const d = parseYmd(s); return `${d.getMonth()+1}월 ${d.getDate()}일`; }
+function fmtFullDate(s) { if(!s) return ''; const d = parseYmd(s); return `${d.getMonth()+1}월 ${d.getDate()}일 (${DOW[d.getDay()]})`; }
+function typeLabel(t) { return t === 'fresh' ? '신선식품' : t === 'frozen' ? '냉동식품' : '일반식품'; }
+function typeClass(t) { return t === 'fresh' ? 'type-fresh' : t === 'frozen' ? 'type-frozen' : 'type-normal'; }
+function soonDays(t) { return t === 'fresh' ? Number(data.settings.freshSoonDays||3) : t === 'frozen' ? Number(data.settings.frozenSoonDays||30) : Number(data.settings.normalSoonDays||7); }
+function dday(item) {
+  if (!item.expireDate) return { days:9999, text:'날짜 없음', cls:'dday-fresh', group:'fresh' };
+  const diff = Math.ceil((parseYmd(item.expireDate) - today()) / 86400000);
+  if (diff < 0) return { days:diff, text:`${Math.abs(diff)}일 지남`, cls:'dday-expired', group:'expired' };
+  if (diff === 0) return { days:0, text:'오늘까지', cls:'dday-soon', group:'soon' };
+  if (diff <= soonDays(item.type)) return { days:diff, text:`D-${diff}`, cls:'dday-soon', group:'soon' };
+  return { days:diff, text:`D-${diff}`, cls:'dday-fresh', group:'fresh' };
+}
+
+function render() {
+  const now = new Date();
+  document.querySelector('.head-sub').textContent = `${now.getFullYear()}년 ${now.getMonth()+1}월 ${now.getDate()}일 ${DOW[now.getDay()]}요일`;
+  if (currentTab === 'fridge') content.innerHTML = renderFridge();
+  if (currentTab === 'recipe') content.innerHTML = renderRecipes();
+  if (currentTab === 'shop') content.innerHTML = renderShop();
+  if (currentTab === 'settings') content.innerHTML = renderSettings();
+  bindContentEvents();
+}
+
+function renderFridge() {
+  const statuses = data.fridgeItems.map(i => dday(i));
+  const freshCnt = statuses.filter(x=>x.group==='fresh').length;
+  const soonCnt = statuses.filter(x=>x.group==='soon').length;
+  const expiredCnt = statuses.filter(x=>x.group==='expired').length;
+  const priority = [...data.fridgeItems].sort((a,b)=>dday(a).days - dday(b).days).slice(0,3);
+  const urgent = data.fridgeItems.filter(i => dday(i).group !== 'fresh').sort((a,b)=>dday(a).days-dday(b).days);
+  const okay = data.fridgeItems.filter(i => dday(i).group === 'fresh').sort((a,b)=>dday(a).days-dday(b).days);
+
+  return `
+    <div class="summary-row">
+      <div class="summary-card sc-fresh"><div class="summary-num">${freshCnt}</div><div class="summary-label">신선</div></div>
+      <div class="summary-card sc-soon"><div class="summary-num">${soonCnt}</div><div class="summary-label">임박</div></div>
+      <div class="summary-card sc-expired"><div class="summary-num">${expiredCnt}</div><div class="summary-label">지남</div></div>
+    </div>
+    <div class="assistant-card">
+      <div class="assistant-title">🍳 이번 주 안에 먹어요</div>
+      <div class="assistant-desc">유통기한과 식품 유형을 같이 보고, 먼저 먹으면 좋은 재료를 골랐어요.</div>
+      <div class="priority-list">${priority.map(renderPriority).join('')}</div>
+      <div class="quick-actions"><button class="quick-btn primary" data-tabgo="recipe">추천 레시피 보기</button><button class="quick-btn" data-tabgo="shop">장보기 추가</button></div>
+    </div>
+    <div class="rule-card">
+      <div class="rule-head"><div class="rule-title">⏰ 유형별 임박 기준</div><div class="rule-edit" data-tabgo="settings">설정 변경</div></div>
+      <div class="rule-row">
+        <div class="rule-chip"><strong>신선</strong><span>${data.settings.freshSoonDays}일 이내</span></div>
+        <div class="rule-chip"><strong>일반</strong><span>${data.settings.normalSoonDays}일 이내</span></div>
+        <div class="rule-chip"><strong>냉동</strong><span>${data.settings.frozenSoonDays}일 이내</span></div>
+      </div>
+    </div>
+    <div class="group-label">⚠️ 빨리 먹어야 해요</div>
+    ${urgent.length ? urgent.map(renderFridgeItem).join('') : '<div class="empty">임박한 재료가 없어요</div>'}
+    <div class="group-label">✅ 아직 넉넉해요</div>
+    ${okay.length ? okay.map(renderFridgeItem).join('') : '<div class="empty">넉넉한 재료가 없어요</div>'}
+  `;
+}
+
+function renderPriority(item) {
+  const d = dday(item);
+  return `<div class="priority-item">
+    <div class="priority-emoji">${esc(item.emoji || '🍽️')}</div>
+    <div class="priority-body"><div class="priority-name">${esc(item.name)}</div><div class="priority-reason">${typeLabel(item.type)} · ${esc(item.place || '위치 없음')}</div></div>
+    <div class="priority-tag ${d.cls}">${esc(d.text)}</div>
+  </div>`;
+}
+
+function renderFridgeItem(item) {
+  const d = dday(item);
+  return `<div class="item" data-fridge="${item.id}">
+    <div class="item-emoji">${esc(item.emoji || '🍽️')}</div>
+    <div class="item-body">
+      <div class="item-name">${esc(item.name)}</div>
+      <div class="item-meta"><span class="type-badge ${typeClass(item.type)}">${typeLabel(item.type)}</span><span class="place-text">${esc(item.place || '위치 없음')} · ${fmtDate(item.expireDate)}</span></div>
+    </div>
+    <div class="item-dday ${d.cls}">${esc(d.text)}</div>
+    <div class="item-actions"><button class="mini-btn" data-edit-fridge="${item.id}">수정</button><button class="mini-btn" data-del-fridge="${item.id}">✕</button></div>
+  </div>`;
+}
+
+function renderRecipes() {
+  return `<input class="recipe-search" placeholder="🔍 저장한 레시피 검색" readonly />
+    <div class="recipe-grid">${data.recipes.map(r => `<div class="recipe-card">
+      <div class="recipe-thumb" style="background:#fbf2e4">${esc(r.emoji || '🍽️')}<span class="recipe-src">${esc(r.source || '직접')}</span></div>
+      <div class="recipe-body"><div class="recipe-name">${esc(r.name)}</div><div class="recipe-memo">${esc(r.memo || r.ingredients || '')}</div>
+      <div class="recipe-actions"><button class="mini-btn" data-edit-recipe="${r.id}">수정</button><button class="mini-btn" data-del-recipe="${r.id}">삭제</button></div></div>
+    </div>`).join('')}</div>`;
+}
+
+function renderShop() {
+  const sorted = [...data.shoppingTrips].sort((a,b)=>a.date.localeCompare(b.date));
+  return `${sorted.map(renderTrip).join('') || '<div class="empty">장보기 일정이 없어요</div>'}`;
+}
+
+function renderTrip(trip) {
+  const done = trip.items.filter(i=>i.done).length;
+  const total = trip.items.length;
+  const finished = total > 0 && done === total;
+  return `<div class="trip-card ${finished?'past':'active-trip'}">
+    <div class="trip-head"><div class="trip-date">${fmtFullDate(trip.date)}</div><span class="trip-badge ${finished?'done':'todo'}">${finished?'완료':'진행 중'}</span></div>
+    <div class="trip-progress">${total}개 중 ${done}개 담음</div>
+    ${trip.items.map(it => `<div class="shop-item ${it.done?'done':''}">
+      <div class="shop-check" data-toggle-shop="${trip.id}|${it.id}">${it.done?'✓':''}</div>
+      <div class="shop-name">${esc(it.name)}</div>${it.from?`<span class="shop-from">${esc(it.from)}</span>`:''}
+      <div class="shop-actions"><button class="mini-btn" data-del-shop="${trip.id}|${it.id}">✕</button></div>
+    </div>`).join('')}
+    <button class="trip-add-item" data-add-shop-item="${trip.id}">+ 항목 추가</button>
+    <button class="trip-finish" data-edit-trip="${trip.id}">날짜/목록 수정</button>
+  </div>`;
+}
+
+function renderSettings() {
+  return `<div class="setting-view">
+    <div class="setting-section"><div class="setting-title">⏰ 임박 알림 기준</div>
+      ${settingCard('신선식품', 'freshSoonDays', '우유, 두부, 생선, 샐러드처럼 날짜에 민감한 재료예요.')}
+      ${settingCard('일반식품', 'normalSoonDays', '계란, 치즈, 햄, 소스처럼 비교적 여유 있는 재료예요.')}
+      ${settingCard('냉동식품', 'frozenSoonDays', '냉동만두, 냉동고기처럼 긴 기간 보관하는 재료예요.')}
+    </div>
+  </div>`;
+}
+function settingCard(name, key, desc) {
+  return `<div class="setting-card" data-setting="${key}"><div class="setting-card-head"><div class="setting-card-name">${name}</div><div class="setting-card-value">${data.settings[key]}일 이내</div></div><div class="setting-card-desc">${desc}</div></div>`;
+}
+
+function bindContentEvents() {
+  document.querySelectorAll('[data-tabgo]').forEach(b => b.onclick = () => switchTab(b.dataset.tabgo));
+  document.querySelectorAll('[data-edit-fridge]').forEach(b => b.onclick = () => openFridgeModal(b.dataset.editFridge));
+  document.querySelectorAll('[data-del-fridge]').forEach(b => b.onclick = async () => { if(confirm('이 재료를 삭제할까요?')) { data.fridgeItems = data.fridgeItems.filter(x=>x.id!==b.dataset.delFridge); await saveAll(); render(); }});
+  document.querySelectorAll('[data-edit-recipe]').forEach(b => b.onclick = () => openRecipeModal(b.dataset.editRecipe));
+  document.querySelectorAll('[data-del-recipe]').forEach(b => b.onclick = async () => { if(confirm('이 레시피를 삭제할까요?')) { data.recipes = data.recipes.filter(x=>x.id!==b.dataset.delRecipe); await saveAll(); render(); }});
+  document.querySelectorAll('[data-add-shop-item]').forEach(b => b.onclick = () => openShopItemModal(b.dataset.addShopItem));
+  document.querySelectorAll('[data-edit-trip]').forEach(b => b.onclick = () => openTripModal(b.dataset.editTrip));
+  document.querySelectorAll('[data-toggle-shop]').forEach(b => b.onclick = async () => { const [tid,iid] = b.dataset.toggleShop.split('|'); const tr = data.shoppingTrips.find(x=>x.id===tid); const it = tr?.items.find(x=>x.id===iid); if(it){ it.done=!it.done; await saveAll(); render(); }});
+  document.querySelectorAll('[data-del-shop]').forEach(b => b.onclick = async () => { const [tid,iid] = b.dataset.delShop.split('|'); const tr = data.shoppingTrips.find(x=>x.id===tid); if(tr && confirm('이 항목을 삭제할까요?')) { tr.items = tr.items.filter(x=>x.id!==iid); await saveAll(); render(); }});
+  document.querySelectorAll('[data-setting]').forEach(c => c.onclick = () => openSettingModal(c.dataset.setting));
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  render();
+}
+
+document.querySelectorAll('.tab').forEach(tab => tab.onclick = () => switchTab(tab.dataset.tab));
+document.querySelector('.fab').onclick = () => {
+  if (currentTab === 'fridge') openFridgeModal();
+  else if (currentTab === 'recipe') openRecipeModal();
+  else if (currentTab === 'shop') openTripModal();
+  else openSettingModal('freshSoonDays');
+};
+
+modalBg.onclick = e => { if(e.target === modalBg) closeModal(); };
+function closeModal(){ modalBg.classList.remove('open'); }
+function openModal(html){ modalInner.innerHTML = `<div class="modal-grip"></div>${html}`; modalBg.classList.add('open'); }
+
+function openFridgeModal(id=null) {
+  const it = id ? data.fridgeItems.find(x=>x.id===id) : null;
+  openModal(`<div class="modal-title">${it?'재료 수정':'재료 추가'}</div>
+    <div class="field-row"><div class="field"><label>이모지</label><input id="fEmoji" value="${esc(it?.emoji || '🥬')}"></div><div class="field"><label>유형</label><select id="fType"><option value="fresh">신선식품</option><option value="normal">일반식품</option><option value="frozen">냉동식품</option></select></div></div>
+    <div class="field"><label>재료명</label><input id="fName" placeholder="예: 우유" value="${esc(it?.name || '')}"></div>
+    <div class="field"><label>위치</label><input id="fPlace" placeholder="예: 냉장실 · 채소칸" value="${esc(it?.place || '')}"></div>
+    <div class="field"><label>유통기한</label><input id="fDate" type="date" value="${esc(it?.expireDate || ymd(today()))}"></div>
+    <div class="field"><label>메모</label><textarea id="fMemo" placeholder="구입처, 남은 양 등">${esc(it?.memo || '')}</textarea></div>
+    <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">저장</button></div>`);
+  modalInner.querySelector('#fType').value = it?.type || 'fresh';
+  modalInner.querySelector('#cancel').onclick = closeModal;
+  modalInner.querySelector('#save').onclick = async () => {
+    const item = { id: it?.id || uid(), emoji:fEmoji.value.trim()||'🍽️', name:fName.value.trim(), type:fType.value, place:fPlace.value.trim(), expireDate:fDate.value, memo:fMemo.value.trim() };
+    if(!item.name) return alert('재료명을 입력해주세요');
+    data.fridgeItems = it ? data.fridgeItems.map(x=>x.id===id?item:x) : [...data.fridgeItems, item];
+    await saveAll(); closeModal(); render();
+  };
+}
+
+function openRecipeModal(id=null) {
+  const r = id ? data.recipes.find(x=>x.id===id) : null;
+  openModal(`<div class="modal-title">${r?'레시피 수정':'레시피 추가'}</div>
+    <div class="field-row"><div class="field"><label>이모지</label><input id="rEmoji" value="${esc(r?.emoji || '🍳')}"></div><div class="field"><label>출처</label><input id="rSource" value="${esc(r?.source || '직접')}"></div></div>
+    <div class="field"><label>레시피명</label><input id="rName" value="${esc(r?.name || '')}"></div>
+    <div class="field"><label>사용 재료</label><input id="rIng" placeholder="예: 우유, 시금치" value="${esc(r?.ingredients || '')}"></div>
+    <div class="field"><label>메모</label><textarea id="rMemo">${esc(r?.memo || '')}</textarea></div>
+    <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">저장</button></div>`);
+  modalInner.querySelector('#cancel').onclick = closeModal;
+  modalInner.querySelector('#save').onclick = async () => {
+    const item = { id: r?.id || uid(), emoji:rEmoji.value.trim()||'🍽️', source:rSource.value.trim(), name:rName.value.trim(), ingredients:rIng.value.trim(), memo:rMemo.value.trim() };
+    if(!item.name) return alert('레시피명을 입력해주세요');
+    data.recipes = r ? data.recipes.map(x=>x.id===id?item:x) : [...data.recipes, item];
+    await saveAll(); closeModal(); render();
+  };
+}
+
+function openTripModal(id=null) {
+  const tr = id ? data.shoppingTrips.find(x=>x.id===id) : null;
+  openModal(`<div class="modal-title">${tr?'장보기 수정':'장보기 추가'}</div>
+    <div class="field"><label>장보기 날짜</label><input id="tDate" type="date" value="${esc(tr?.date || ymd(today()))}"></div>
+    <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">저장</button></div>`);
+  modalInner.querySelector('#cancel').onclick = closeModal;
+  modalInner.querySelector('#save').onclick = async () => {
+    const item = tr ? { ...tr, date:tDate.value } : { id:uid(), date:tDate.value, status:'todo', items:[] };
+    data.shoppingTrips = tr ? data.shoppingTrips.map(x=>x.id===id?item:x) : [...data.shoppingTrips, item];
+    await saveAll(); closeModal(); render();
+  };
+}
+
+function openShopItemModal(tripId) {
+  const tr = data.shoppingTrips.find(x=>x.id===tripId);
+  openModal(`<div class="modal-title">장보기 항목 추가</div>
+    <div class="field"><label>항목명</label><input id="sName" placeholder="예: 우유"></div>
+    <div class="field"><label>출처/메모</label><input id="sFrom" placeholder="예: 냉장고, 레시피"></div>
+    <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">추가</button></div>`);
+  modalInner.querySelector('#cancel').onclick = closeModal;
+  modalInner.querySelector('#save').onclick = async () => {
+    const name = sName.value.trim(); if(!name) return alert('항목명을 입력해주세요');
+    tr.items.push({ id:uid(), name, from:sFrom.value.trim(), done:false });
+    await saveAll(); closeModal(); render();
+  };
+}
+
+function openSettingModal(key) {
+  const labels = { freshSoonDays:'신선식품', normalSoonDays:'일반식품', frozenSoonDays:'냉동식품' };
+  openModal(`<div class="modal-title">${labels[key]} 임박 기준</div>
+    <div class="field"><label>며칠 이내부터 임박으로 볼까요?</label><input id="setVal" type="number" min="1" value="${data.settings[key]}"></div>
+    <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">저장</button></div>`);
+  modalInner.querySelector('#cancel').onclick = closeModal;
+  modalInner.querySelector('#save').onclick = async () => {
+    data.settings[key] = Number(setVal.value || 1);
+    await saveAll(); closeModal(); render();
+  };
+}
+
+loadAll();
 </script>
 
 </body>
