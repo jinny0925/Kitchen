@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>혁주🧡연진's Kitchen</title>
+<title>우리집 부엌 </title>
 <style>
   @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css');
 
@@ -130,6 +130,12 @@
     aspect-ratio: 1 / 0.72;
     display: flex; align-items: center; justify-content: center;
     font-size: 38px; position: relative;
+  }
+  .recipe-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   .recipe-src {
     position: absolute; top: 7px; left: 7px;
@@ -365,12 +371,12 @@ import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/f
   이미 HJYJ Calendar 프로젝트를 그대로 쓰려면 기존 config를 그대로 넣어도 됩니다.
 */
 const firebaseConfig = {
-  apiKey: "AIzaSyD-1yzBjPHkjPcY-kA7SW3Y_VsMzsejX3g",
-  authDomain: "kitchen-d1b9b.firebaseapp.com",
-  projectId: "kitchen-d1b9b",
-  storageBucket: "kitchen-d1b9b.firebasestorage.app",
-  messagingSenderId: "282284001113",
-  appId: "1:282284001113:web:23e61542002477403b2e48"
+  apiKey: "여기에_apiKey",
+  authDomain: "여기에_authDomain",
+  projectId: "hjyj-calendar",
+  storageBucket: "여기에_storageBucket",
+  messagingSenderId: "여기에_messagingSenderId",
+  appId: "여기에_appId"
 };
 
 const app = initializeApp(firebaseConfig);
@@ -395,9 +401,9 @@ function defaultData() {
       { id: uid(), name:'계란', emoji:'🥚', type:'normal', place:'냉장실', expireDate:'2026-05-24', memo:'' }
     ],
     recipes: [
-      { id: uid(), name:'마늘 크림 파스타', emoji:'🍝', source:'인스타', url:'', memo:'우유 들어감, 15분', ingredients:'우유, 마늘, 파스타면' },
-      { id: uid(), name:'계란찜 황금레시피', emoji:'🍳', source:'유튜브', url:'', memo:'계란 4개', ingredients:'계란, 물, 소금' },
-      { id: uid(), name:'딸기 우유 스무디', emoji:'🥤', source:'직접', url:'', memo:'임박 딸기 처리용', ingredients:'딸기, 우유' }
+      { id: uid(), name:'마늘 크림 파스타', emoji:'🍝', source:'인스타', url:'', imageUrl:'', memo:'우유 들어감, 15분', ingredients:'우유, 마늘, 파스타면' },
+      { id: uid(), name:'계란찜 황금레시피', emoji:'🍳', source:'유튜브', url:'', imageUrl:'', memo:'계란 4개', ingredients:'계란, 물, 소금' },
+      { id: uid(), name:'딸기 우유 스무디', emoji:'🥤', source:'직접', url:'', imageUrl:'', memo:'임박 딸기 처리용', ingredients:'딸기, 우유' }
     ],
     shoppingTrips: [
       { id: uid(), date:'2026-05-14', status:'active', items:[
@@ -531,7 +537,10 @@ function renderFridgeItem(item) {
 function renderRecipes() {
   return `<input class="recipe-search" placeholder="🔍 저장한 레시피 검색" readonly />
     <div class="recipe-grid">${data.recipes.map(r => `<div class="recipe-card" data-view-recipe="${r.id}">
-      <div class="recipe-thumb" style="background:#fbf2e4">${esc(r.emoji || '🍽️')}<span class="recipe-src">${esc(r.source || '직접')}</span></div>
+      <div class="recipe-thumb" style="background:#fbf2e4">
+        ${r.imageUrl ? `<img src="${esc(r.imageUrl)}" alt="${esc(r.name)}">` : esc(r.emoji || '🍽️')}
+        <span class="recipe-src">${esc(r.source || '직접')}</span>
+      </div>
       <div class="recipe-body">
         <div class="recipe-name">${esc(r.name)}</div>
         <div class="recipe-memo">${esc(r.memo || r.ingredients || '')}</div>
@@ -647,6 +656,11 @@ function openRecipeDetailModal(id) {
   if (!r) return;
 
   openModal(`<div class="modal-title">레시피 상세</div>
+    ${r.imageUrl ? `
+      <div style="width:100%;aspect-ratio:1/0.62;border-radius:16px;overflow:hidden;margin-bottom:16px;background:var(--surface);">
+        <img src="${esc(r.imageUrl)}" style="width:100%;height:100%;object-fit:cover;display:block;">
+      </div>
+    ` : ''}
     <div class="field">
       <label>레시피명</label>
       <div style="font-size:17px;font-weight:800;line-height:1.45;letter-spacing:-0.02em;">${esc(r.emoji || '🍽️')} ${esc(r.name)}</div>
@@ -684,15 +698,41 @@ function openRecipeDetailModal(id) {
 function openRecipeModal(id=null) {
   const r = id ? data.recipes.find(x=>x.id===id) : null;
   openModal(`<div class="modal-title">${r?'레시피 수정':'레시피 추가'}</div>
-    <div class="field-row"><div class="field"><label>이모지</label><input id="rEmoji" value="${esc(r?.emoji || '🍳')}"></div><div class="field"><label>출처</label><input id="rSource" value="${esc(r?.source || '직접')}"></div></div>
+    <div class="field-row">
+    <div class="field">
+      <label>이모지</label>
+      <input id="rEmoji" value="${esc(r?.emoji || '🍳')}">
+    </div>
+
+    <div class="field">
+      <label>출처</label>
+
+      <select id="rSource">
+        ${['인스타','틱톡','블로그','직접','가족','기타'].map(src =>
+          `<option value="${src}" ${(r?.source || '직접') === src ? 'selected' : ''}>${src}</option>`
+        ).join('')}
+      </select>
+
+    </div>
+  </div>
     <div class="field"><label>레시피명</label><input id="rName" value="${esc(r?.name || '')}"></div>
     <div class="field"><label>URL / 링크</label><input id="rUrl" type="url" placeholder="예: https://youtu.be/..." value="${esc(r?.url || '')}"></div>
+    <div class="field"><label>이미지 URL</label><input id="rImageUrl" type="url" placeholder="예: https://images.unsplash.com/..." value="${esc(r?.imageUrl || '')}"></div>
     <div class="field"><label>사용 재료</label><input id="rIng" placeholder="예: 우유, 시금치" value="${esc(r?.ingredients || '')}"></div>
     <div class="field"><label>메모</label><textarea id="rMemo">${esc(r?.memo || '')}</textarea></div>
     <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">저장</button></div>`);
   modalInner.querySelector('#cancel').onclick = closeModal;
   modalInner.querySelector('#save').onclick = async () => {
-    const item = { id: r?.id || uid(), emoji:rEmoji.value.trim()||'🍽️', source:rSource.value.trim(), url:rUrl.value.trim(), name:rName.value.trim(), ingredients:rIng.value.trim(), memo:rMemo.value.trim() };
+    const item = {
+      id: r?.id || uid(),
+      emoji: rEmoji.value.trim() || '🍽️',
+      source: rSource.value.trim(),
+      url: rUrl.value.trim(),
+      imageUrl: rImageUrl.value.trim(),
+      name: rName.value.trim(),
+      ingredients: rIng.value.trim(),
+      memo: rMemo.value.trim()
+    };
     if(!item.name) return alert('레시피명을 입력해주세요');
     data.recipes = r ? data.recipes.map(x=>x.id===id?item:x) : [...data.recipes, item];
     await saveAll(); closeModal(); render();
