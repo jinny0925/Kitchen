@@ -365,6 +365,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
 import { getFirestore, doc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-storage.js";
 
 /*
   Firebase 콘솔 > 프로젝트 설정 > SDK 설정 및 구성에서 아래 값을 교체하세요.
@@ -381,6 +382,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 const boardRef = doc(db, "kitchenBoards", "main");
 
 const DOW = ['일','월','화','수','목','금','토'];
@@ -445,6 +447,16 @@ function loadAll() {
 async function saveAll() {
   try { await setDoc(boardRef, data); }
   catch(e) { console.error(e); alert('저장 실패'); }
+}
+
+async function uploadRecipeImage(file, recipeId) {
+  if (!file) return '';
+
+  const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+  const imageRef = ref(storage, `recipeImages/${recipeId}_${Date.now()}.${ext}`);
+
+  await uploadBytes(imageRef, file);
+  return await getDownloadURL(imageRef);
 }
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
@@ -697,45 +709,69 @@ function openRecipeDetailModal(id) {
 
 function openRecipeModal(id=null) {
   const r = id ? data.recipes.find(x=>x.id===id) : null;
+  const sourceOptions = ['인스타','틱톡','블로그','직접','가족','기타'];
+
   openModal(`<div class="modal-title">${r?'레시피 수정':'레시피 추가'}</div>
     <div class="field-row">
-    <div class="field">
-      <label>이모지</label>
-      <input id="rEmoji" value="${esc(r?.emoji || '🍳')}">
+      <div class="field">
+        <label>이모지</label>
+        <input id="rEmoji" value="${esc(r?.emoji || '🍳')}">
+      </div>
+      <div class="field">
+        <label>출처</label>
+        <select id="rSource">
+          ${sourceOptions.map(src => `<option value="${src}" ${(r?.source || '직접') === src ? 'selected' : ''}>${src}</option>`).join('')}
+        </select>
+      </div>
     </div>
-
-    <div class="field">
-      <label>출처</label>
-
-      <select id="rSource">
-        ${['인스타','틱톡','블로그','직접','가족','기타'].map(src =>
-          `<option value="${src}" ${(r?.source || '직접') === src ? 'selected' : ''}>${src}</option>`
-        ).join('')}
-      </select>
-
-    </div>
-  </div>
     <div class="field"><label>레시피명</label><input id="rName" value="${esc(r?.name || '')}"></div>
     <div class="field"><label>URL / 링크</label><input id="rUrl" type="url" placeholder="예: https://youtu.be/..." value="${esc(r?.url || '')}"></div>
-    <div class="field"><label>이미지 URL</label><input id="rImageUrl" type="url" placeholder="예: https://images.unsplash.com/..." value="${esc(r?.imageUrl || '')}"></div>
+    <div class="field">
+      <label>대표 이미지</label>
+      ${r?.imageUrl ? `<div style="width:100%;aspect-ratio:1/0.55;border-radius:13px;overflow:hidden;background:var(--surface);margin-bottom:8px;"><img src="${esc(r.imageUrl)}" style="width:100%;height:100%;object-fit:cover;display:block;"></div>` : ''}
+      <input id="rImageFile" type="file" accept="image/*">
+    </div>
     <div class="field"><label>사용 재료</label><input id="rIng" placeholder="예: 우유, 시금치" value="${esc(r?.ingredients || '')}"></div>
     <div class="field"><label>메모</label><textarea id="rMemo">${esc(r?.memo || '')}</textarea></div>
     <div class="modal-actions"><button class="btn btn-cancel" id="cancel">취소</button><button class="btn btn-save" id="save">저장</button></div>`);
+
   modalInner.querySelector('#cancel').onclick = closeModal;
   modalInner.querySelector('#save').onclick = async () => {
+    const recipeId = r?.id || uid();
+    const file = modalInner.querySelector('#rImageFile').files[0];
+    let imageUrl = r?.imageUrl || '';
+
     const item = {
-      id: r?.id || uid(),
+      id: recipeId,
       emoji: rEmoji.value.trim() || '🍽️',
       source: rSource.value.trim(),
       url: rUrl.value.trim(),
-      imageUrl: rImageUrl.value.trim(),
+      imageUrl,
       name: rName.value.trim(),
       ingredients: rIng.value.trim(),
       memo: rMemo.value.trim()
     };
+
     if(!item.name) return alert('레시피명을 입력해주세요');
-    data.recipes = r ? data.recipes.map(x=>x.id===id?item:x) : [...data.recipes, item];
-    await saveAll(); closeModal(); render();
+
+    try {
+      const saveBtn = modalInner.querySelector('#save');
+      saveBtn.disabled = true;
+      saveBtn.textContent = file ? '이미지 업로드 중...' : '저장 중...';
+
+      if (file) {
+        item.imageUrl = await uploadRecipeImage(file, recipeId);
+      }
+
+      data.recipes = r ? data.recipes.map(x=>x.id===id?item:x) : [...data.recipes, item];
+      await saveAll(); closeModal(); render();
+    } catch (e) {
+      console.error(e);
+      alert('이미지 저장 실패. Firebase Storage 규칙을 확인해주세요.');
+      const saveBtn = modalInner.querySelector('#save');
+      saveBtn.disabled = false;
+      saveBtn.textContent = '저장';
+    }
   };
 }
 
